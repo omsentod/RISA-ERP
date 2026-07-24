@@ -1,0 +1,22 @@
+{
+    "preset": "laravel",
+    "rules": {
+        "declare_strict_types": false,
+        "concat_space": {
+            "spacing": "one"
+        },
+        "not_operator_with_successor_space": false,
+        "ordered_imports": {
+            "sort_algorithm": "alpha"
+        },
+        "phpdoc_align": {
+            "align": "left"
+        }
+    },
+    "exclude": [
+        "storage",
+        "bootstrap/cache",
+        "vendor",
+        "node_modules"
+    ]
+}

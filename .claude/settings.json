@@ -1,0 +1,73 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan:*)",
+      "Bash(composer:*)",
+      "Bash(./vendor/bin/pint:*)",
+      "Bash(./vendor/bin/phpunit:*)",
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(npx:*)",
+      "Bash(git status)",
+      "Bash(git status:*)",
+      "Bash(git diff)",
+      "Bash(git diff:*)",
+      "Bash(git log)",
+      "Bash(git log:*)",
+      "Bash(git branch)",
+      "Bash(git branch:*)",
+      "Bash(git show:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(git stash:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(find . -type:*)",
+      "Bash(find . -name:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(mkdir:*)",
+      "Bash(touch:*)",
+      "Bash(mv:*)",
+      "Bash(cp:*)",
+      "Bash(tree:*)",
+      "Bash(which:*)",
+      "Bash(pwd)",
+      "Bash(echo:*)",
+      "Bash(python3:*)",
+      "Bash(/Applications/MAMP/Library/bin/mysql80/bin/mysql:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(rm -f:*)",
+      "Bash(git push:*)",
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean -f:*)",
+      "Bash(git branch -D:*)",
+      "Bash(php artisan migrate:fresh --force)",
+      "Bash(php artisan db:wipe:*)",
+      "Bash(composer remove:*)",
+      "Bash(*DROP DATABASE*)",
+      "Bash(*DROP TABLE*)",
+      "Bash(*TRUNCATE*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && ./vendor/bin/pint --dirty --quiet 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}
