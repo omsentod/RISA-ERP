@@ -26,6 +26,9 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->favicon(asset('assets/images/favicon-square.png'))
+            ->brandLogo(asset('assets/images/risa-logo.png'))
+            ->brandLogoHeight('2.5rem')
             ->colors([
                 'primary' => Color::Amber,
             ])
