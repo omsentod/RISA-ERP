@@ -19,6 +19,7 @@ class Product extends Model
         'registration_id',
         'code',
         'name',
+        'specification',
         'description',
         'is_published',
         'published_at',

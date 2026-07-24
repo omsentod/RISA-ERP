@@ -45,8 +45,18 @@ class ProductSeeder extends Seeder
         ));
 
         DB::transaction(function () use ($nonLocking, $locking) {
-            $this->seedRows($nonLocking, isLocking: false);
-            $this->seedRows($locking, isLocking: true);
+            // Bikin/ambil 2 kategori tetap sesuai nama sheet Excel
+            $nonLockingCategory = ProductCategory::firstOrCreate(
+                ['name' => 'NON LOCKING'],
+                ['slug' => Str::slug('NON LOCKING'), 'is_locking' => false]
+            );
+            $lockingCategory = ProductCategory::firstOrCreate(
+                ['name' => 'LOCKING'],
+                ['slug' => Str::slug('LOCKING'), 'is_locking' => true]
+            );
+
+            $this->seedRows($nonLocking, $nonLockingCategory->id);
+            $this->seedRows($locking, $lockingCategory->id);
         });
 
         $this->command->info(sprintf(
@@ -57,15 +67,14 @@ class ProductSeeder extends Seeder
         ));
     }
 
-    private function seedRows(array $rows, bool $isLocking): void
+    private function seedRows(array $rows, int $categoryId): void
     {
-        $label = $isLocking ? 'LOCKING' : 'NON LOCKING';
+        $categoryName = ProductCategory::find($categoryId)?->name ?? 'UNKNOWN';
         $bar = $this->command->getOutput()->createProgressBar(count($rows));
-        $bar->setFormat("  {$label}: %current%/%max% [%bar%] %percent:3s%%");
+        $bar->setFormat("  {$categoryName}: %current%/%max% [%bar%] %percent:3s%%");
         $bar->start();
 
         $registrationCache = [];
-        $categoryCache = [];
 
         foreach ($rows as $row) {
             $spec = $this->cleanValue($row['spesifikasi'] ?? null);
@@ -77,22 +86,6 @@ class ProductSeeder extends Seeder
                 $bar->advance();
 
                 continue;
-            }
-
-            // Category (dedupe within run)
-            $categoryId = null;
-            if ($spec !== null) {
-                if (!isset($categoryCache[$spec])) {
-                    $category = ProductCategory::firstOrCreate(
-                        ['name' => $spec],
-                        [
-                            'slug' => Str::slug($spec) . '-' . substr(md5($spec), 0, 6),
-                            'is_locking' => $isLocking,
-                        ]
-                    );
-                    $categoryCache[$spec] = $category->id;
-                }
-                $categoryId = $categoryCache[$spec];
             }
 
             // Registration (dedupe within run)
@@ -114,6 +107,7 @@ class ProductSeeder extends Seeder
                     'product_category_id' => $categoryId,
                     'registration_id' => $registrationId,
                     'name' => $name,
+                    'specification' => $spec,
                 ]
             );
 

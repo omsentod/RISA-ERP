@@ -12,6 +12,7 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Str;
 
 class ProductResource extends Resource
 {
@@ -47,18 +48,17 @@ class ProductResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->columnSpanFull(),
+                        Forms\Components\Textarea::make('specification')
+                            ->label('Spesifikasi')
+                            ->placeholder('Contoh: Bone plate large fragment plate non locking stainless steel non steril')
+                            ->rows(2)
+                            ->columnSpanFull(),
                         Forms\Components\Select::make('product_category_id')
                             ->label('Kategori')
                             ->relationship('category', 'name')
                             ->searchable()
                             ->preload()
-                            ->createOptionForm([
-                                Forms\Components\TextInput::make('name')
-                                    ->required()
-                                    ->unique('product_categories', 'name'),
-                                Forms\Components\Toggle::make('is_locking')
-                                    ->label('Kategori Locking'),
-                            ]),
+                            ->required(),
                         Forms\Components\Select::make('registration_id')
                             ->label('NIE')
                             ->relationship('registration', 'nie_number')
@@ -106,14 +106,19 @@ class ProductResource extends Resource
                     ->sortable()
                     ->wrap()
                     ->limit(60),
+                Tables\Columns\TextColumn::make('specification')
+                    ->label('Spesifikasi')
+                    ->searchable()
+                    ->wrap()
+                    ->limit(80)
+                    ->tooltip(fn ($record) => $record?->specification)
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('Kategori')
                     ->searchable()
                     ->sortable()
                     ->badge()
-                    ->color(fn ($record) => $record?->category?->is_locking ? 'info' : 'gray')
-                    ->limit(40)
-                    ->tooltip(fn ($record) => $record?->category?->name),
+                    ->color(fn ($record) => $record?->category?->is_locking ? 'info' : 'gray'),
                 Tables\Columns\TextColumn::make('registration.nie_number')
                     ->label('NIE')
                     ->searchable()
@@ -168,7 +173,7 @@ class ProductResource extends Resource
 
     public static function getGloballySearchableAttributes(): array
     {
-        return ['code', 'name'];
+        return ['code', 'name', 'specification'];
     }
 
     public static function getGlobalSearchResultDetails($record): array
@@ -176,6 +181,7 @@ class ProductResource extends Resource
         return [
             'Kategori' => $record->category?->name,
             'NIE' => $record->registration?->nie_number,
+            'Spesifikasi' => Str::limit($record->specification ?? '', 100),
         ];
     }
 
