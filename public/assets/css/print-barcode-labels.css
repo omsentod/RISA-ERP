@@ -89,10 +89,12 @@ html, body {
 /* --- GROUP 2: Caution --- */
 .group-2 {
     display: flex;
-    align-items: center; /* centered vertically */
+    align-items: flex-start; /* top-aligned */
     justify-content: center;
     width: 6mm;
     height: 100%;
+    padding-top: 1mm;
+    margin-left: 4mm; /* Jarak tambahan ke Group 3 */
 }
 .caution-text {
     font-size: 9.5pt;
