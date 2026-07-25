@@ -30,7 +30,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->sidebarCollapsibleOnDesktop()
             ->navigationGroups([
-                'Master Data',
+                'Produk',
                 'Manajemen Akses',
             ])
             ->renderHook(

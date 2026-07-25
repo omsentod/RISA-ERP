@@ -19,7 +19,7 @@ class ProductCategoryResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-squares-2x2';
 
-    protected static ?string $navigationGroup = 'Master Data';
+    protected static ?string $navigationGroup = 'Produk';
 
     protected static ?string $navigationLabel = 'Kategori Produk';
 

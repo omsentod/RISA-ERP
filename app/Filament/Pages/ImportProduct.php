@@ -25,7 +25,7 @@ class ImportProduct extends Page implements HasForms
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-up-tray';
 
-    protected static ?string $navigationGroup = 'Master Data';
+    protected static ?string $navigationGroup = 'Produk';
 
     protected static ?string $navigationLabel = 'Import Produk Excel';
 

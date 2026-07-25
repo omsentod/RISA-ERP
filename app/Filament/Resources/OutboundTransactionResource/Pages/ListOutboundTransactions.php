@@ -27,18 +27,34 @@ class ListOutboundTransactions extends ListRecords
     public function toggleViewMode(): void
     {
         $this->viewMode = $this->viewMode === 'transaksi' ? 'rekap' : 'transaksi';
+        $this->tableSortColumn = null;
+        $this->tableSortDirection = null;
+        $this->tableSearch = null;
+        $this->tableFilters = [];
         if (method_exists($this, 'resetTable')) {
             $this->resetTable();
         }
     }
 
+    /**
+     * Override table() — gabungkan logika viewMode switch + HasSelectionToggle
+     * agar kedua fitur tidak saling timpa.
+     */
     public function table(Table $table): Table
     {
         if ($this->viewMode === 'rekap') {
             return $this->buildRekapTable($table);
         }
 
-        return parent::table($table);
+        // Mode transaksi: pakai table() dari parent (OutboundTransactionResource),
+        // lalu terapkan logika selectMode dari trait.
+        $table = parent::table($table);
+
+        if (!$this->selectMode) {
+            $table->bulkActions([]);
+        }
+
+        return $table;
     }
 
     protected function buildRekapTable(Table $table): Table
@@ -104,28 +120,30 @@ class ListOutboundTransactions extends ListRecords
             ->bulkActions([]);
     }
 
+    /**
+     * Header actions — gunakan ->visible(fn() => ...) agar setiap action
+     * di-evaluate secara lazy per render cycle, bukan di-cache saat mount pertama.
+     */
     protected function getHeaderActions(): array
     {
-        $isRekap = $this->viewMode === 'rekap';
-
         return [
             Actions\Action::make('toggleViewMode')
-                ->label($isRekap ? 'Lihat Surat Jalan' : 'Lihat Rekap Produk')
-                ->icon($isRekap ? 'heroicon-o-document-text' : 'heroicon-o-chart-bar')
+                ->label(fn () => $this->viewMode === 'rekap' ? 'Lihat Surat Jalan' : 'Lihat Rekap Produk')
+                ->icon(fn () => $this->viewMode === 'rekap' ? 'heroicon-o-document-text' : 'heroicon-o-chart-bar')
                 ->color('gray')
                 ->action('toggleViewMode'),
-            ...($isRekap ? [] : [
-                $this->getSelectionToggleAction(),
-                Actions\Action::make('startSession')
-                    ->label('Scan Produk')
-                    ->icon('heroicon-o-qr-code')
-                    ->color('primary')
-                    ->action(function () {
-                        $transaction = app(StartOutboundSession::class)->handle();
+            $this->getSelectionToggleAction()
+                ->visible(fn () => $this->viewMode === 'transaksi'),
+            Actions\Action::make('startSession')
+                ->label('Scan Produk')
+                ->icon('heroicon-o-qr-code')
+                ->color('primary')
+                ->visible(fn () => $this->viewMode === 'transaksi')
+                ->action(function () {
+                    $transaction = app(StartOutboundSession::class)->handle();
 
-                        return redirect(ScanOutbound::getUrl(['transaction' => $transaction->id]));
-                    }),
-            ]),
+                    return redirect(ScanOutbound::getUrl(['transaction' => $transaction->id]));
+                }),
         ];
     }
 }

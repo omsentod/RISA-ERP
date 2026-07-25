@@ -22,7 +22,7 @@ class RegistrationResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-identification';
 
-    protected static ?string $navigationGroup = 'Master Data';
+    protected static ?string $navigationGroup = 'Produk';
 
     protected static ?string $navigationLabel = 'NIE (Nomor Izin Edar)';
 

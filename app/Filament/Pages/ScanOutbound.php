@@ -14,6 +14,8 @@ class ScanOutbound extends Page
 {
     protected static bool $shouldRegisterNavigation = false;
 
+    protected static ?string $navigationGroup = 'Produk';
+
     protected static ?string $slug = 'produk-keluar/{transaction}/scan';
 
     protected static string $view = 'filament.pages.scan-outbound';

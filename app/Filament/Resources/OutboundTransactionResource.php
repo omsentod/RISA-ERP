@@ -23,7 +23,7 @@ class OutboundTransactionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-up-tray';
 
-    protected static ?string $navigationGroup = 'Master Data';
+    protected static ?string $navigationGroup = 'Produk';
 
     protected static ?string $navigationLabel = 'Produk Keluar';
 

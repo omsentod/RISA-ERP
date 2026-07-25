@@ -21,13 +21,17 @@ class BuildPrintBarcodeJs
         $ids = collect($productIds)->take(200)->all();
 
         $labels = Product::query()
+            ->with(['registration'])
             ->whereIn('id', $ids)
             ->orderByRaw('FIELD(id,' . implode(',', array_map('intval', $ids)) . ')')
-            ->get(['id', 'code', 'name'])
+            ->get()
             ->map(fn (Product $p) => [
                 'code' => $p->code,
-                'name' => Str::limit($p->name, 40),
-                'svg' => $this->barcode->svg($p->code, widthFactor: 2, height: 80),
+                'name' => $p->name,
+                'specification' => $p->specification ?? '',
+                'nie_number' => $p->registration?->nie_number ?? '-',
+                'expired_at' => $p->registration?->expired_at ? $p->registration->expired_at->format('Y m') : '',
+                'svg' => $this->barcode->svg($p->code, widthFactor: 2, height: 75),
             ])
             ->all();
 
@@ -35,7 +39,13 @@ class BuildPrintBarcodeJs
             return "alert('Tidak ada produk untuk dicetak');";
         }
 
-        $html = view('partials.print-barcode-labels', ['labels' => $labels])->render();
+        $logoPath = public_path('assets/images/osfix.jpeg');
+        $logoBase64 = '';
+        if (file_exists($logoPath)) {
+            $logoBase64 = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($logoPath));
+        }
+
+        $html = view('partials.print-barcode-labels', ['labels' => $labels, 'logo' => $logoBase64])->render();
         $encoded = base64_encode($html);
 
         return <<<JS

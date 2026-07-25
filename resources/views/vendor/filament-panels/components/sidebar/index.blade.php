@@ -6,12 +6,49 @@
     $openSidebarClasses = 'fi-sidebar-open w-[--sidebar-width] translate-x-0 shadow-xl ring-1 ring-gray-950/5 dark:ring-white/10 rtl:-translate-x-0';
     $isRtl = __('filament-panels::layout.direction') === 'rtl';
 
-    // Filter sidebar navigation to display the child items of the active Parent Group
+    // ──────────────────────────────────────────────────────────
+    // PAKEM NAVIGASI RISA ERP — JANGAN HAPUS/GANTI FILE INI
+    //
+    // Sidebar hanya menampilkan items dari NavigationGroup yang AKTIF.
+    // Group aktif ditentukan oleh topbar menu (top-navbar-menu.blade.php).
+    //
+    // Fallback: jika tidak ada group yang aktif (misal halaman hidden
+    // seperti ScanOutbound), cari group yang cocok dengan $navigationGroup
+    // dari Page/Resource saat ini — agar konteks tetap terjaga.
+    // ──────────────────────────────────────────────────────────
+
     $activeGroupNavigation = $navigation;
+    $hasActiveGroup = false;
+
     foreach ($navigation as $group) {
         if ($group->isActive()) {
             $activeGroupNavigation = [$group];
+            $hasActiveGroup = true;
             break;
+        }
+    }
+
+    // Fallback: jika tidak ada group aktif, coba match dari Livewire component
+    if (! $hasActiveGroup) {
+        $currentPage = request()->route()?->getController();
+        $targetGroup = null;
+
+        if ($currentPage && method_exists($currentPage, 'getNavigationGroup')) {
+            $targetGroup = $currentPage::getNavigationGroup();
+        } elseif ($currentPage && property_exists($currentPage, 'resource')) {
+            $resourceClass = $currentPage::$resource ?? null;
+            if ($resourceClass && method_exists($resourceClass, 'getNavigationGroup')) {
+                $targetGroup = $resourceClass::getNavigationGroup();
+            }
+        }
+
+        if ($targetGroup) {
+            foreach ($navigation as $group) {
+                if ($group->getLabel() === $targetGroup) {
+                    $activeGroupNavigation = [$group];
+                    break;
+                }
+            }
         }
     }
 @endphp

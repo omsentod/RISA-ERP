@@ -122,6 +122,57 @@ app/
 - Contoh pattern print inline: lihat `app/Domain/Product/Actions/BuildPrintBarcodeJs.php`
 - Tab baru **boleh** untuk: external link, PDF download yang user save, atau destination bookmarkable dengan URL sendiri
 
+### Arsitektur Navigasi (PAKEM — JANGAN DIUBAH)
+
+Navigasi RISA ERP menggunakan **3 tingkat hierarki**:
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ TOPBAR:  [Dashboard]  [Master Data ▾]  [Manajemen Akses]        │  ← Meta-Category
+│                        ┌──────────┐                              │
+│                        │ Produk   │  ← Dropdown (parent menu)   │
+│                        │ (future) │                              │
+│                        └──────────┘                              │
+├──────────────┬───────────────────────────────────────────────────┤
+│ SIDEBAR      │                                                   │
+│              │                                                   │
+│ Produk       │       Konten halaman...                           │  ← Group Label
+│  Daftar      │                                                   │  ← Menu Item
+│  Kategori    │                                                   │  ← Menu Item
+│  NIE         │                                                   │  ← Menu Item
+│  Keluar      │                                                   │  ← Menu Item
+└──────────────┴───────────────────────────────────────────────────┘
+```
+
+**Komponen:**
+
+| Tingkat | Di mana | Implementasi |
+|---|---|---|
+| Meta-Category (Topbar) | `top-navbar-menu.blade.php` | Array `$metaCategories` — dropdown jika punya >1 group, direct link jika 1:1 |
+| Parent Menu (Sidebar Group) | Sidebar group label (`.fi-sidebar-group-label`) | `$navigationGroup` di Resource/Page (contoh: `'Produk'`) + `->navigationGroups([...])` di `AdminPanelProvider.php` |
+| Menu Item (Sidebar Item) | Sidebar item link | `$navigationLabel` + `$navigationSort` di Resource/Page |
+
+**Aturan wajib:**
+
+1. **Sidebar** hanya menampilkan items dari NavigationGroup yang aktif → diatur oleh published view `resources/views/vendor/filament-panels/components/sidebar/index.blade.php`. **JANGAN hapus/ganti file ini.**
+2. **Topbar** didrive oleh `filament.components.top-navbar-menu` via render hook `PanelsRenderHook::TOPBAR_START`. **JANGAN hapus.**
+3. Setiap Resource/Page **wajib** set `$navigationGroup` — ini yang menjadi **sidebar group label** (bukan `$navigationParentItem`).
+4. Halaman hidden (`$shouldRegisterNavigation = false`) **tetap wajib** set `$navigationGroup` agar sidebar fallback bisa menemukan grup yang tepat saat halaman tersebut aktif.
+5. Meta-category dengan >1 sub-group akan render **dropdown** di topbar. Meta-category 1:1 render direct link.
+
+**Cara menambah Parent Menu (sidebar group) baru di bawah meta-category yang sudah ada:**
+
+1. Tambahkan nama group baru di `->navigationGroups([...])` pada `AdminPanelProvider.php`
+2. Tambahkan nama group baru di array `groups` pada `$metaCategories` di `top-navbar-menu.blade.php`
+3. Set `$navigationGroup = '<nama group baru>'` di setiap Resource/Page yang masuk group tersebut
+4. Selesai — dropdown topbar otomatis menampilkan group baru, sidebar otomatis filter
+
+**Cara menambah Meta-Category baru di topbar:**
+
+1. Tambahkan entry baru di array `$metaCategories` di `top-navbar-menu.blade.php` (label, icon, groups)
+2. Tambahkan nama group(s) di `->navigationGroups([...])` pada `AdminPanelProvider.php`
+3. Set `$navigationGroup` yang sesuai di setiap Resource/Page
+
 ## Environment & Koneksi Database
 
 - **Primary**: `mysql` connection → database `risa_erp` (ERP data utama)
