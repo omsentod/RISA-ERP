@@ -18,17 +18,6 @@ class ProductCategoryFactory extends Factory
             'name' => $name,
             'slug' => Str::slug($name),
             'description' => fake()->sentence(),
-            'is_locking' => fake()->boolean(),
         ];
-    }
-
-    public function locking(): static
-    {
-        return $this->state(['is_locking' => true]);
-    }
-
-    public function nonLocking(): static
-    {
-        return $this->state(['is_locking' => false]);
     }
 }

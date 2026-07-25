@@ -31,6 +31,7 @@ class AdminPanelProvider extends PanelProvider
             ->favicon(asset('assets/images/favicon-square.png'))
             ->brandLogo(fn () => view('filament.components.brand-logo'))
             ->font('Poppins')
+            ->theme(asset('css/filament/admin/theme.css'))
             ->colors([
                 'primary' => Color::Amber,
             ])

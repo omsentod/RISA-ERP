@@ -48,11 +48,11 @@ class ProductSeeder extends Seeder
             // Bikin/ambil 2 kategori tetap sesuai nama sheet Excel
             $nonLockingCategory = ProductCategory::firstOrCreate(
                 ['name' => 'NON LOCKING'],
-                ['slug' => Str::slug('NON LOCKING'), 'is_locking' => false]
+                ['slug' => Str::slug('NON LOCKING')]
             );
             $lockingCategory = ProductCategory::firstOrCreate(
                 ['name' => 'LOCKING'],
-                ['slug' => Str::slug('LOCKING'), 'is_locking' => true]
+                ['slug' => Str::slug('LOCKING')]
             );
 
             $this->seedRows($nonLocking, $nonLockingCategory->id);

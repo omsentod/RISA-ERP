@@ -17,14 +17,11 @@ class ProductCategory extends Model
         'name',
         'slug',
         'description',
-        'is_locking',
     ];
 
     protected function casts(): array
     {
-        return [
-            'is_locking' => 'boolean',
-        ];
+        return [];
     }
 
     protected static function booted(): void

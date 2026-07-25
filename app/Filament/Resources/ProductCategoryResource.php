@@ -39,9 +39,6 @@ class ProductCategoryResource extends Resource
                     ->unique(ignoreRecord: true)
                     ->maxLength(255)
                     ->columnSpanFull(),
-                Forms\Components\Toggle::make('is_locking')
-                    ->label('Kategori Locking')
-                    ->helperText('Aktifkan jika kategori ini adalah implant locking. Biarkan mati untuk non-locking.'),
                 Forms\Components\Textarea::make('description')
                     ->label('Deskripsi')
                     ->rows(3)
@@ -58,9 +55,6 @@ class ProductCategoryResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->wrap(),
-                Tables\Columns\IconColumn::make('is_locking')
-                    ->label('Locking')
-                    ->boolean(),
                 Tables\Columns\TextColumn::make('products_count')
                     ->label('Jumlah Produk')
                     ->counts('products')
@@ -73,10 +67,6 @@ class ProductCategoryResource extends Resource
             ])
             ->defaultSort('name')
             ->filters([
-                Tables\Filters\TernaryFilter::make('is_locking')
-                    ->label('Tipe Locking')
-                    ->trueLabel('Locking')
-                    ->falseLabel('Non-Locking'),
                 TrashedFilter::make(),
             ])
             ->actions([

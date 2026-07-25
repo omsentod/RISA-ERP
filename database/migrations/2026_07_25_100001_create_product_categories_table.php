@@ -13,7 +13,6 @@ return new class extends Migration
             $table->string('name', 255)->unique()->comment('Nama spesifikasi kategori, dari kolom Spesifikasi di BARCODE.xlsx');
             $table->string('slug', 255)->unique()->comment('Slug URL-friendly dari name');
             $table->text('description')->nullable();
-            $table->boolean('is_locking')->default(false)->comment('Kategori locking atau non-locking (implant type)');
             $table->timestamps();
             $table->softDeletes();
         });

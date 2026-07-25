@@ -42,14 +42,17 @@ class ApplyProductImport
 
                 $categoryId = $categoryCache[$row->categoryName] ??= ProductCategory::firstOrCreate(
                     ['name' => $row->categoryName],
-                    ['slug' => Str::slug($row->categoryName), 'is_locking' => $row->isLocking]
+                    ['slug' => Str::slug($row->categoryName)]
                 )->id;
 
                 $registrationId = null;
                 if ($row->nieNumber !== null) {
                     $registrationId = $registrationCache[$row->nieNumber] ??= Registration::firstOrCreate(
                         ['nie_number' => $row->nieNumber],
-                        ['issuer' => 'BPOM']
+                        [
+                            'issuer' => 'BPOM',
+                            'notes' => 'Dibuat otomatis via Excel Import. Perlu melengkapi tanggal kadaluarsa (expiry date).',
+                        ]
                     )->id;
                 }
 

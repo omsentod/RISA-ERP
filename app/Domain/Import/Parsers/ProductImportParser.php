@@ -6,14 +6,10 @@ use App\Domain\Import\Data\ProductImportRow;
 use App\Domain\Product\Models\Product;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Facades\Excel;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ProductImportParser
 {
-    private const SHEET_MAP = [
-        0 => ['name' => 'NON LOCKING', 'is_locking' => false],
-        1 => ['name' => 'LOCKING', 'is_locking' => true],
-    ];
-
     /**
      * @return array<int, ProductImportRow>
      */
@@ -27,11 +23,14 @@ class ProductImportParser
             }
         }, $absolutePath);
 
+        $sheetNames = IOFactory::load($absolutePath)->getSheetNames();
+
         $rows = [];
         $existingCodes = $this->loadExistingCodes();
 
-        foreach (self::SHEET_MAP as $sheetIndex => $meta) {
-            $sheetRows = $sheets[$sheetIndex] ?? [];
+        foreach ($sheets as $sheetIndex => $sheetRows) {
+            $categoryName = $sheetNames[$sheetIndex] ?? ('Sheet ' . ($sheetIndex + 1));
+
             foreach ($sheetRows as $index => $row) {
                 $rowNumber = $index + 2;
                 $code = $this->clean($row['kode'] ?? null);
@@ -47,8 +46,7 @@ class ProductImportParser
                     $rows[] = new ProductImportRow(
                         sheetIndex: $sheetIndex,
                         rowNumber: $rowNumber,
-                        categoryName: $meta['name'],
-                        isLocking: $meta['is_locking'],
+                        categoryName: $categoryName,
                         code: $code,
                         name: $name,
                         specification: $spec,
@@ -66,8 +64,7 @@ class ProductImportParser
                     $rows[] = new ProductImportRow(
                         sheetIndex: $sheetIndex,
                         rowNumber: $rowNumber,
-                        categoryName: $meta['name'],
-                        isLocking: $meta['is_locking'],
+                        categoryName: $categoryName,
                         code: $code,
                         name: $name,
                         specification: $spec,
@@ -82,8 +79,7 @@ class ProductImportParser
                 $rows[] = new ProductImportRow(
                     sheetIndex: $sheetIndex,
                     rowNumber: $rowNumber,
-                    categoryName: $meta['name'],
-                    isLocking: $meta['is_locking'],
+                    categoryName: $categoryName,
                     code: $code,
                     name: $name,
                     specification: $spec,

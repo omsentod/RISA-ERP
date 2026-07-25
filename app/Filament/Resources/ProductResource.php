@@ -118,7 +118,7 @@ class ProductResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->badge()
-                    ->color(fn ($record) => $record?->category?->is_locking ? 'info' : 'gray'),
+                    ->color('info'),
                 Tables\Columns\TextColumn::make('registration.nie_number')
                     ->label('NIE')
                     ->searchable()
@@ -145,9 +145,6 @@ class ProductResource extends Resource
                     ->label('Status Publikasi')
                     ->trueLabel('Sudah dipublish')
                     ->falseLabel('Belum dipublish'),
-                Tables\Filters\Filter::make('locking_category')
-                    ->label('Kategori Locking')
-                    ->query(fn (Builder $query) => $query->whereHas('category', fn ($q) => $q->where('is_locking', true))),
                 TrashedFilter::make(),
             ])
             ->actions([
