@@ -2,6 +2,8 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\Login;
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -25,10 +27,10 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(Login::class)
             ->favicon(asset('assets/images/favicon-square.png'))
-            ->brandLogo(asset('assets/images/risa-logo.png'))
-            ->brandLogoHeight('2.5rem')
+            ->brandLogo(fn () => view('filament.components.brand-logo'))
+            ->font('Poppins')
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -51,6 +53,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            ->plugin(FilamentShieldPlugin::make());
     }
 }

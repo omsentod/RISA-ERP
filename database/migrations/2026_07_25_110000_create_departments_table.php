@@ -1,0 +1,26 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('departments', function (Blueprint $table) {
+            $table->id();
+            $table->string('name', 100)->unique()->comment('Nama departemen, misal Manajemen, Registrasi, Sales');
+            $table->string('code', 20)->unique()->nullable()->comment('Kode singkat departemen untuk referensi cepat');
+            $table->string('description', 500)->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+            $table->softDeletes();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('departments');
+    }
+};
