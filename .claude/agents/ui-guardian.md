@@ -111,6 +111,39 @@ Almost never. Only for public-facing pages that don't belong in admin.
 - **ChartWidget colors**: use `rgba(...)` with fixed values, or read from CSS vars. Do NOT hardcode brand hex codes; if you need to match theme colors, add a CSS var to the theme.
 - **Cache expensive queries**: if a widget runs a query > 100ms, wrap in `Cache::remember(...)` with a 5-min TTL, keyed by user + panel.
 
+## Rules for Interactive Actions & Navigation
+
+**Prefer inline (modal / iframe / Alpine) over navigation to a new tab or new route** for any action that is:
+- Short-lived (print, quick edit, confirmation, preview, resolve conflict)
+- Tightly coupled to the current view (row-scoped or table-scoped operation)
+- Not meant to be bookmarkable or shareable
+
+**Why**:
+- Context preservation — user stays on the row/list they were working on, no back-button dance
+- Consistent chrome — new tab loads full Filament layout which may differ from the invoker page (different sidebar/topbar hooks fire in fresh render, causing visual mismatch)
+- Faster — no full page load
+- No dead pages — you don't accumulate hidden `$shouldRegisterNavigation = false` pages that only exist to satisfy `->url()` calls
+
+**How, in order of preference**:
+1. **Filament modal action** — `Tables\Actions\Action::make()->form([...])->action(fn ($data) => ...)` or `->modalContent(view(...))` for read-only preview
+2. **Filament notification with action** — for quick acknowledge / undo
+3. **Inline `$livewire->js('...')`** — inject JS to spawn hidden `<iframe>`, write server-rendered HTML, trigger `iframe.contentWindow.print()` / interact / cleanup. Pattern:
+   ```php
+   ->action(function ($record, $livewire) {
+       $html = view('partials.print-something', [...])->render();
+       $encoded = base64_encode($html);
+       $livewire->js("...create iframe, write, print, cleanup...");
+   })
+   ```
+4. **Livewire component event + Alpine listener** — when the interaction needs 2-way state with the invoking page
+5. **New route / new tab** — only when the destination is genuinely a page (bookmarkable, has its own URL semantics, user might want to keep open)
+
+**When new tab IS acceptable**:
+- The user explicitly said "buka di tab baru" or the UX is external navigation (report viewer, external system link, PDF download that user needs to save)
+- The destination has multi-step interactive work that would lose context if the parent page navigates away
+
+**Never** open a new tab for a "print" or "preview" flow just because you already have a route rendered — inline via iframe is nearly always the correct pattern.
+
 ## Anti-patterns to REJECT
 
 - ❌ Editing anything under `vendor/` (will be lost on `composer update`)
@@ -123,6 +156,8 @@ Almost never. Only for public-facing pages that don't belong in admin.
 - ❌ Missing dark mode variants on custom styles
 - ❌ Fixed-width layouts (`width: 800px`) that break on mobile
 - ❌ Inline `style="..."` attributes in Blade — use Tailwind classes
+- ❌ `->openUrlInNewTab()` for print/preview/quick-action flows — use modal or inline iframe instead (see "Rules for Interactive Actions & Navigation")
+- ❌ Creating a hidden Filament Page (`$shouldRegisterNavigation = false`) just to serve a print/preview URL — render the HTML inline and inject via `$livewire->js()`
 
 ## Output format (when reviewing changes)
 

@@ -115,6 +115,13 @@ app/
 - Set `$columnSpan` eksplisit (`'full'`, `1`, `2`, atau per-breakpoint)
 - Query > 100ms → wrap `Cache::remember(...)` 5 menit
 
+**Interaksi & Navigasi — JANGAN buka tab/route baru untuk print/preview/quick-action:**
+- Print, preview, quick edit, konfirmasi → pakai **modal Filament** atau **inline iframe via `$livewire->js()`**
+- **Jangan** pakai `->openUrlInNewTab()` atau redirect ke route baru untuk flow print. Sidebar/topbar bisa render beda antar halaman → user bingung + kehilangan konteks
+- **Jangan** bikin Filament Page hidden (`$shouldRegisterNavigation = false`) hanya untuk serve URL cetak — render HTML inline, base64-encode, inject via JS ke hidden iframe, trigger `iframe.contentWindow.print()`
+- Contoh pattern print inline: lihat `app/Domain/Product/Actions/BuildPrintBarcodeJs.php`
+- Tab baru **boleh** untuk: external link, PDF download yang user save, atau destination bookmarkable dengan URL sendiri
+
 ## Environment & Koneksi Database
 
 - **Primary**: `mysql` connection → database `risa_erp` (ERP data utama)
