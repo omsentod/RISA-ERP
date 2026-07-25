@@ -3,11 +3,13 @@
 namespace App\Domain\Product\Models;
 
 use App\Domain\Registration\Models\Registration;
+use App\Domain\Stock\Models\OutboundTransactionItem;
 use App\Models\User;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
@@ -47,6 +49,11 @@ class Product extends Model
     public function publisher(): BelongsTo
     {
         return $this->belongsTo(User::class, 'published_by');
+    }
+
+    public function outboundItems(): HasMany
+    {
+        return $this->hasMany(OutboundTransactionItem::class);
     }
 
     protected static function newFactory()
