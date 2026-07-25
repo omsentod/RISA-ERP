@@ -86,6 +86,35 @@ app/
 - Filter untuk soft-deleted → `TrashedFilter::make()`
 - Export/import bulk → pakai action async kalau ukuran > 100 records (walau di shared hosting jalan sync)
 
+## Aturan UI & Branding
+
+**Kalau butuh customize UI, konsultasi ke subagent `ui-guardian` dulu.** Ringkasan aturannya:
+
+**Hierarki customization (SELALU mulai dari yang paling ringan):**
+1. **Panel config** di `AdminPanelProvider.php` (colors, brand, favicon, dark mode) — 5 menit
+2. **Custom CSS theme** di `resources/css/filament/admin/theme.css` — untuk styling detail
+3. **Publish Blade views** — hanya kalau butuh restructure HTML (hati-hati, upgrade cost)
+4. **Custom Filament Page** dengan Blade sendiri di `resources/views/filament/pages/` — untuk non-CRUD
+5. **Custom Widget/Field** — kalau built-in Filament tidak cukup
+
+**Konvensi asset:**
+- Brand assets di `public/assets/images/` — akses via `asset('assets/images/...')`
+- Logo butuh 2 versi (light + dark background) kalau tidak neutral
+- Favicon: PNG 512×512 di `public/assets/images/favicon-square.png`
+- Compress image > 500 KB sebelum commit
+
+**Aturan mutlak:**
+- **Jangan** edit file di `vendor/` (hilang saat composer update)
+- **Jangan** hardcode hex color di PHP/Blade — pakai `Color::` constant atau CSS var
+- **Jangan** pakai `<script src="https://cdn...">` — install via npm, bundle via Vite
+- **Wajib** test dark mode + responsive setiap kali ada custom CSS
+- **Wajib** pakai `<x-filament-panels::page>` wrapper di custom Blade page
+
+**Widget di `app/Filament/Widgets/`:**
+- Set `$sort` (gap 10: 1, 10, 20, 30) supaya bisa insert baru tanpa renumbering
+- Set `$columnSpan` eksplisit (`'full'`, `1`, `2`, atau per-breakpoint)
+- Query > 100ms → wrap `Cache::remember(...)` 5 menit
+
 ## Environment & Koneksi Database
 
 - **Primary**: `mysql` connection → database `risa_erp` (ERP data utama)
