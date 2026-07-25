@@ -3,14 +3,17 @@
 namespace App\Filament\Resources;
 
 use App\Domain\Product\Models\Product;
+use App\Filament\Pages\PrintBarcodeLabel;
 use App\Filament\Resources\ProductResource\Pages;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Str;
 
@@ -22,7 +25,7 @@ class ProductResource extends Resource
 
     protected static ?string $navigationGroup = 'Master Data';
 
-    protected static ?string $navigationLabel = 'Produk';
+    protected static ?string $navigationLabel = 'Daftar Produk';
 
     protected static ?string $modelLabel = 'Produk';
 
@@ -147,17 +150,57 @@ class ProductResource extends Resource
                     ->falseLabel('Belum dipublish'),
                 TrashedFilter::make(),
             ])
+            ->headerActions([
+                Tables\Actions\Action::make('toggleSelectMode')
+                    ->label(fn () => request()->boolean('select') ? 'Nonaktifkan Multi-Pilih' : 'Aktifkan Multi-Pilih')
+                    ->icon(fn () => request()->boolean('select') ? 'heroicon-o-x-mark' : 'heroicon-o-check-circle')
+                    ->color(fn () => request()->boolean('select') ? 'danger' : 'gray')
+                    ->url(fn () => url()->current() . (request()->boolean('select') ? '' : '?select=1')),
+                Tables\Actions\Action::make('printAllFiltered')
+                    ->label('Cetak Semua (Filter Aktif)')
+                    ->icon('heroicon-o-printer')
+                    ->color('primary')
+                    ->requiresConfirmation()
+                    ->modalHeading('Cetak Label untuk Semua Produk yang Sedang Difilter')
+                    ->modalDescription('Akan membuka halaman cetak untuk semua produk yang sesuai filter/pencarian saat ini. Maksimum 200 produk per batch.')
+                    ->action(function ($livewire) {
+                        $ids = $livewire->getFilteredTableQuery()->limit(200)->pluck('id')->all();
+                        if (empty($ids)) {
+                            Notification::make()->title('Tidak ada produk untuk dicetak')->warning()->send();
+
+                            return;
+                        }
+
+                        return redirect(PrintBarcodeLabel::getUrl(['ids' => implode(',', $ids)]));
+                    }),
+            ])
             ->actions([
+                Tables\Actions\Action::make('printLabel')
+                    ->label('Cetak Label')
+                    ->icon('heroicon-o-printer')
+                    ->color('gray')
+                    ->url(fn (Product $record) => PrintBarcodeLabel::getUrl(['ids' => $record->id]))
+                    ->openUrlInNewTab(),
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
             ])
-            ->bulkActions([
+            ->bulkActions(request()->boolean('select') ? [
+                Tables\Actions\BulkAction::make('printLabelsBulk')
+                    ->label('Cetak Label Terpilih')
+                    ->icon('heroicon-o-printer')
+                    ->color('primary')
+                    ->action(function (Collection $records) {
+                        $ids = $records->pluck('id')->take(200)->all();
+
+                        return redirect(PrintBarcodeLabel::getUrl(['ids' => implode(',', $ids)]));
+                    })
+                    ->deselectRecordsAfterCompletion(),
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()->requiresConfirmation(),
                     Tables\Actions\ForceDeleteBulkAction::make()->requiresConfirmation(),
                     Tables\Actions\RestoreBulkAction::make(),
                 ]),
-            ])
+            ] : [])
             ->deferLoading();
     }
 

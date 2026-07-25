@@ -29,7 +29,7 @@ class RoleSeeder extends Seeder
                         ->orWhere('name', 'like', '%_registration')
                         ->orWhere('name', 'like', '%_any_registration')
                         ->orWhere('name', 'like', 'widget_%')
-                        ->orWhere('name', 'like', 'page_Import%');
+                        ->orWhere('name', 'like', 'page_%');
                 })
                 ->where('name', 'not like', 'force_delete%')
                 ->get()

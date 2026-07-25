@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RISA Barcode Checker & Scanner - PT RISA IMPLANTAMA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- html5-qrcode library for camera-based barcode scanning -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-rgb: 37, 99, 235;
+            --bg-base: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-glass: rgba(255, 255, 255, 0.7);
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            
+            --success: #10b981;
+            --success-bg: #ecfdf5;
+            --success-border: #a7f3d0;
+            
+            --error: #ef4444;
+            --error-bg: #fef2f2;
+            --error-border: #fca5a5;
+        }
+
+        [data-theme="dark"] {
+            --primary: #3b82f6;
+            --primary-hover: #60a5fa;
+            --primary-rgb: 59, 130, 246;
+            --bg-base: #0f172a;
+            --bg-card: #1e293b;
+            --bg-glass: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+            
+            --success-bg: rgba(16, 185, 129, 0.1);
+            --success-border: rgba(16, 185, 129, 0.3);
+            
+            --error-bg: rgba(239, 68, 68, 0.1);
+            --error-border: rgba(239, 68, 68, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Top Navigation Bar */
+        .navbar {
+            background-color: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 18px;
+            box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.3);
+        }
+
+        .brand-text h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .brand-text p {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Container & Grid Layout */
+        .main-container {
+            max-width: 1280px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 24px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            flex: 1;
+        }
+
+        @media (min-width: 992px) {
+            .main-container {
+                grid-template-columns: 1.2fr 1fr;
+            }
+        }
+
+        /* Glassmorphism Panels */
+        .panel {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        /* Buttons & Forms */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            text-decoration: none;
+            height: 38px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(var(--primary-rgb), 0.2);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-base);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--border-color);
+        }
+
+        .btn-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:hover {
+            background-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .theme-toggle-btn {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            width: 38px;
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-main);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .theme-toggle-btn:hover {
+            background-color: var(--border-color);
+        }
+
+        /* Tab Switcher */
+        .tab-switcher {
+            display: flex;
+            background-color: var(--bg-base);
+            padding: 4px;
+            border-radius: 8px;
+            gap: 4px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .tab-btn.active {
+            background-color: var(--bg-card);
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Input Manual / Scanner Gun Styles */
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .barcode-input {
+            width: 100%;
+            padding: 14px 18px;
+            font-family: 'Space Mono', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            outline: none;
+            letter-spacing: 1px;
+        }
+
+        .barcode-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.15);
+        }
+
+        .scanner-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--success);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse 1.6s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+            }
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+
+        /* Camera Scanner Styles */
+        .camera-container {
+            width: 100%;
+            aspect-ratio: 4/3;
+            background-color: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid var(--border-color);
+        }
+
+        #reader {
+            width: 100% !important;
+            height: 100% !important;
+            border: none !important;
+        }
+
+        #reader video {
+            object-fit: cover !important;
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .camera-select {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            outline: none;
+            font-family: inherit;
+            font-size: 13px;
+        }
+
+        /* Results Display Panel */
+        .result-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            text-align: center;
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            color: var(--text-muted);
+            gap: 12px;
+            height: 100%;
+            min-height: 250px;
+        }
+
+        .result-placeholder svg {
+            width: 48px;
+            height: 48px;
+            stroke: var(--text-muted);
+            opacity: 0.6;
+        }
+
+        .result-display {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            align-self: flex-start;
+        }
+
+        .status-badge.valid {
+            background-color: var(--success-bg);
+            color: var(--success);
+            border: 1px solid var(--success-border);
+        }
+
+        .status-badge.invalid {
+            background-color: var(--error-bg);
+            color: var(--error);
+            border: 1px solid var(--error-border);
+        }
+
+        .product-info-card {
+            background-color: var(--bg-base);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .info-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .info-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-val-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .info-val-text {
+            font-size: 14px;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .info-val-code {
+            font-family: 'Space Mono', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* SVG Barcode Preview inside Checker */
+        .scanned-barcode-svg {
+            background-color: white;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 6px;
+        }
+
+        .scanned-barcode-svg svg {
+            max-width: 100%;
+            height: 100%;
+        }
+
+        /* History Section */
+        .history-section {
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-header h4 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background-color: var(--bg-base);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-size: 13px;
+        }
+
+        .history-code {
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+        }
+
+        .history-meta {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .history-time {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .history-status {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .history-status.valid {
+            color: var(--success);
+        }
+
+        .history-status.invalid {
+            color: var(--error);
+        }
+
+        /* Upload Drag & Drop Zone */
+        .upload-zone {
+            border: 2px dashed var(--primary);
+            background-color: rgba(59, 130, 246, 0.03);
+            border-radius: 12px;
+            padding: 24px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            background-color: rgba(59, 130, 246, 0.08);
+            border-color: var(--primary-hover);
+            transform: scale(1.005);
+        }
+
+        .upload-icon {
+            width: 44px;
+            height: 44px;
+            stroke: var(--primary);
+            opacity: 0.85;
+        }
+
+        .upload-preview {
+            max-width: 100%;
+            max-height: 120px;
+            border-radius: 6px;
+            margin-top: 10px;
+            border: 1px solid var(--border-color);
+            display: none;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation -->
+    <nav class="navbar">
+        <div class="brand">
+            <div class="brand-logo">R</div>
+            <div class="brand-text">
+                <h1>RISA Barcode Verification</h1>
+                <p>PT RISA IMPLANTAMA</p>
+            </div>
+        </div>
+        <div class="nav-actions">
+            <a href="index.html" class="btn btn-secondary">
+                🖨️ Cetak Barcode Label
+            </a>
+            <a href="pendataan.html" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
+                📊 Pendataan Outbound
+            </a>
+            <button class="theme-toggle-btn" id="theme-toggle" title="Ganti Tema">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        
+        <!-- Left Column: Input and Scanner -->
+        <div class="panel">
+            <div class="panel-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                </svg>
+                Input Scanner & Kamera
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="tab-switcher">
+                <button class="tab-btn active" onclick="switchTab('manual')">Scanner Gun / Manual</button>
+                <button class="tab-btn" onclick="switchTab('camera')">Kamera Scanner HP</button>
+            </div>
+
+            <!-- Tab 1: Manual / Gun Input -->
+            <div id="tab-manual" class="tab-content active">
+                <div class="input-wrapper">
+                    <label class="info-label" for="manual-barcode">Pindai / Masukkan Kode Barcode</label>
+                    <input type="text" id="manual-barcode" class="barcode-input" placeholder="Arahkan scanner atau ketik..." autofocus autocomplete="off">
+                </div>
+                <div class="scanner-status">
+                    <div class="status-dot"></div>
+                    <span>Scanner Gun Siap Terbaca (Autofocus Aktif)</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+                    💡 <strong>Tips:</strong> Jika menggunakan barcode scanner gun fisik, cukup arahkan kursor ke input box di atas, lalu scan barcode produk. Sistem akan otomatis melacak data secara instan setelah scan selesai.
+                </div>
+            </div>
+
+            <!-- Tab 2: Camera QR/Barcode Scanner -->
+            <div id="tab-camera" class="tab-content">
+                <!-- drag & drop input for barcode image -->
+                <div class="upload-zone" id="upload-zone" title="Klik atau seret file gambar barcode untuk memindai">
+                    <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span style="font-size: 14px; font-weight: 700; color: var(--text-main);">Unggah Foto / Seret Gambar Barcode</span>
+                    <span style="font-size: 11px; color: var(--text-muted);">Klik untuk jepret kamera HP atau pilih file foto barcode di sini</span>
+                    <input type="file" id="barcode-file-input" accept="image/*" style="display: none;">
+                    <img id="upload-preview" class="upload-preview" alt="Preview Barcode">
+                </div>
+
+                <div style="text-align: center; font-size: 11px; font-weight: 700; color: var(--text-muted); margin: 8px 0; text-transform: uppercase; letter-spacing: 0.5px;">
+                    — ATAU PINDAI DENGAN WEBCAM LIVE —
+                </div>
+
+                <!-- Warning / Error Camera Alert Box -->
+                <div id="camera-error" style="display: none; padding: 14px 18px; border-radius: 10px; font-size: 13px; line-height: 1.6; background-color: var(--error-bg); border: 1px solid var(--error-border); color: var(--text-main); margin-bottom: 12px;">
+                    <strong id="camera-error-title" style="color: var(--error); display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-family: 'Outfit', sans-serif; font-size: 14px;">
+                        ⚠️ Peringatan Akses Kamera
+                    </strong>
+                    <span id="camera-error-text"></span>
+                </div>
+
+                <div class="camera-container">
+                    <div id="reader"></div>
+                </div>
+                <div class="camera-controls">
+                    <select id="camera-select" class="camera-select">
+                        <option value="">Memuat kamera...</option>
+                    </select>
+                    <button id="camera-toggle-btn" class="btn btn-primary" onclick="toggleCamera()">Aktifkan Kamera</button>
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted); line-height: 1.6; background: rgba(59, 130, 246, 0.05); border-left: 3px solid var(--primary); padding: 10px; border-radius: 4px; margin-top: 10px;">
+                    💡 <strong>Tips Pemindaian Kamera HP:</strong>
+                    <br>
+                    1. Jarak Ideal: Pegang HP sekitar <strong>20 - 30 cm</strong> dari barcode. Jangan terlalu dekat agar gambar tidak buram/blur.
+                    <br>
+                    2. Biarkan kamera memfokuskan gambarnya selama 1-2 detik. Barcode akan langsung terbaca otomatis saat posisinya tajam.
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Verification Results & History -->
+        <div class="panel">
+            <div class="panel-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Hasil Pemeriksaan Barcode
+            </div>
+
+            <!-- Verification Results Display -->
+            <div id="result-container" style="flex: 1;">
+                <div class="result-placeholder">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <p>Menunggu pemindaian atau input barcode...</p>
+                </div>
+            </div>
+
+            <!-- History log -->
+            <div class="history-section">
+                <div class="history-header">
+                    <h4>Riwayat Pemindaian</h4>
+                    <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px; height: 24px;" onclick="clearHistory()">Hapus Semua</button>
+                </div>
+                <div class="history-list" id="history-list">
+                    <!-- Scan history items will be appended here -->
+                    <div style="text-align: center; font-size: 12px; color: var(--text-muted); padding: 10px;">Belum ada riwayat pemindaian.</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Import Generated Barcode Data File -->
+    <script src="barcodes_data.js"></script>
+
+    <script>
+        // Theme Management
+        const body = document.body;
+        const themeToggle = document.getElementById('theme-toggle');
+        
+        // Load theme preference
+        if (localStorage.getItem('theme') === 'dark') {
+            body.setAttribute('data-theme', 'dark');
+            updateThemeIcon(true);
+        } else {
+            body.removeAttribute('data-theme');
+            updateThemeIcon(false);
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const isDark = body.getAttribute('data-theme') === 'dark';
+            if (isDark) {
+                body.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+                updateThemeIcon(false);
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                updateThemeIcon(true);
+            }
+        });
+
+        function updateThemeIcon(isDark) {
+            themeToggle.innerHTML = isDark 
+                ? `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 7a5 5 0 100 10 5 5 0 000-10z" /></svg>`
+                : `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>`;
+        }
+
+        // Tab Switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            if (tabId === 'manual') {
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                document.getElementById('tab-manual').classList.add('active');
+                // Auto focus on manual input
+                setTimeout(() => document.getElementById('manual-barcode').focus(), 100);
+                stopCameraScanner();
+            } else {
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                document.getElementById('tab-camera').classList.add('active');
+                initializeCameraList();
+            }
+        }
+
+        // Auto focus management for Scanner Gun
+        const manualInput = document.getElementById('manual-barcode');
+        
+        // Prevent losing focus unless user is explicitly clicking buttons
+        document.addEventListener('click', (e) => {
+            const activeTab = document.querySelector('.tab-content.active').id;
+            if (activeTab === 'tab-manual' && e.target !== manualInput && !e.target.closest('.nav-actions') && !e.target.closest('.tab-switcher')) {
+                // Focus back on input after a short delay
+                setTimeout(() => manualInput.focus(), 100);
+            }
+        });
+
+        // Scan/Input Detection
+        manualInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const val = manualInput.value.trim();
+                if (val) {
+                    processScannedCode(val);
+                    manualInput.value = ''; // Reset input for next scan
+                }
+            }
+        });
+
+        // Audio Beep Generator using Web Audio API
+        function playBeep(isSuccess) {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                if (isSuccess) {
+                    // Friendly double high beep for success
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime);
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    oscillator.start();
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+                    oscillator.stop(audioCtx.currentTime + 0.15);
+                } else {
+                    // Low warning buzz for failure
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(250, audioCtx.currentTime);
+                    gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    oscillator.start();
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+                    oscillator.stop(audioCtx.currentTime + 0.4);
+                }
+            } catch (err) {
+                console.error("Web Audio Beep failed: ", err);
+            }
+        }
+
+        // Haptic Feedback (Vibration API)
+        function triggerHaptic(isSuccess) {
+            if (navigator.vibrate) {
+                if (isSuccess) {
+                    navigator.vibrate(80);
+                } else {
+                    navigator.vibrate([100, 50, 100]);
+                }
+            }
+        }
+
+        // Search and verify logic
+        let scanHistory = JSON.parse(localStorage.getItem('risa_scan_history') || '[]');
+        updateHistoryUI();
+
+        function processScannedCode(barcodeText) {
+            const resultContainer = document.getElementById('result-container');
+            
+            // Search in our local database
+            // barcodeData is loaded from barcodes_data.js
+            const product = barcodeData.find(item => String(item.kode).trim().toUpperCase() === String(barcodeText).trim().toUpperCase());
+            
+            if (product) {
+                // Success! Play sound & vibrate
+                playBeep(true);
+                triggerHaptic(true);
+                
+                // Render results
+                resultContainer.innerHTML = `
+                    <div class="result-display">
+                        <div class="status-badge valid">✓ Barcode Terdaftar</div>
+                        <div class="product-info-card">
+                            <div class="info-field">
+                                <span class="info-label">Nama Produk</span>
+                                <span class="info-val-title">${product.nama_produk || '-'}</span>
+                            </div>
+                            <div class="info-field">
+                                <span class="info-label">Spesifikasi</span>
+                                <span class="info-val-text">${product.spesifikasi || '-'}</span>
+                            </div>
+                            <div class="info-field">
+                                <span class="info-label">Kode Barcode</span>
+                                <span class="info-val-code">${product.kode}</span>
+                            </div>
+                            <div class="info-field">
+                                <span class="info-label">Visual Barcode</span>
+                                <div class="scanned-barcode-svg">
+                                    ${product.svg}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add to history
+                addHistoryItem(barcodeText, product.nama_produk, true);
+            } else {
+                // Failure! Play error buzz
+                playBeep(false);
+                triggerHaptic(false);
+                
+                resultContainer.innerHTML = `
+                    <div class="result-display">
+                        <div class="status-badge invalid">✗ Tidak Ditemukan</div>
+                        <div class="product-info-card" style="border-color: var(--error-border); background-color: var(--error-bg);">
+                            <div class="info-field">
+                                <span class="info-label" style="color: var(--error);">Kode Tidak Terdaftar</span>
+                                <span class="info-val-code" style="color: var(--error);">${barcodeText}</span>
+                            </div>
+                            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-top: 8px;">
+                                Barcode ini tidak terdaftar dalam database katalog produk aktif RISA. Pastikan kode yang dipindai sudah benar.
+                            </p>
+                        </div>
+                    </div>
+                `;
+                
+                // Add to history
+                addHistoryItem(barcodeText, "Katalog Tidak Ditemukan", false);
+            }
+        }
+
+        // History Management
+        function addHistoryItem(code, name, isValid) {
+            const date = new Date();
+            const timeStr = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            // Remove duplication if exists to keep list clean
+            scanHistory = scanHistory.filter(item => item.code !== code);
+            
+            // Add to top of list
+            scanHistory.unshift({
+                code: code,
+                name: name,
+                time: timeStr,
+                valid: isValid
+            });
+            
+            // Limit history to 20 items
+            if (scanHistory.length > 20) {
+                scanHistory.pop();
+            }
+            
+            localStorage.setItem('risa_scan_history', JSON.stringify(scanHistory));
+            updateHistoryUI();
+        }
+
+        function updateHistoryUI() {
+            const listContainer = document.getElementById('history-list');
+            if (scanHistory.length === 0) {
+                listContainer.innerHTML = `<div style="text-align: center; font-size: 12px; color: var(--text-muted); padding: 10px;">Belum ada riwayat pemindaian.</div>`;
+                return;
+            }
+            
+            listContainer.innerHTML = scanHistory.map(item => `
+                <div class="history-item" onclick="processScannedCode('${item.code}')" style="cursor: pointer;">
+                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                        <span class="history-code">${item.code}</span>
+                        <span style="font-size: 11px; color: var(--text-muted); max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            ${item.name}
+                        </span>
+                    </div>
+                    <div class="history-meta">
+                        <span class="history-status ${item.valid ? 'valid' : 'invalid'}">
+                            ${item.valid ? 'Valid' : 'Gagal'}
+                        </span>
+                        <span class="history-time">${item.time}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function clearHistory() {
+            if (confirm("Apakah Anda yakin ingin menghapus semua riwayat pemindaian?")) {
+                scanHistory = [];
+                localStorage.removeItem('risa_scan_history');
+                updateHistoryUI();
+            }
+        }
+
+
+        // Camera Scanner Management (html5-qrcode wrapper)
+        let html5QrCode = null;
+        let isScannerRunning = false;
+
+        function showCameraError(title, text) {
+            const errDiv = document.getElementById('camera-error');
+            const errTitle = document.getElementById('camera-error-title');
+            const errText = document.getElementById('camera-error-text');
+            
+            errTitle.innerHTML = `⚠️ ${title}`;
+            errText.innerHTML = text;
+            errDiv.style.display = 'block';
+        }
+
+        function hideCameraError() {
+            document.getElementById('camera-error').style.display = 'none';
+        }
+
+        function getFriendlyCameraError(err) {
+            const name = err.name || err.toString();
+            console.error("Detail error kamera:", err);
+            
+            if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+                return "<strong>Izin Kamera Ditolak.</strong> Browser memblokir akses ke kamera Anda. Silakan klik ikon gembok/pengaturan di sebelah kiri kolom alamat (address bar) browser Anda, ubah status Kamera menjadi <strong>'Izinkan' (Allow)</strong>, lalu muat ulang (refresh) halaman ini.";
+            }
+            if (name === "NotReadableError" || name === "TrackStartError") {
+                return "<strong>Kamera Sedang Digunakan.</strong> Kamera laptop Anda tidak dapat dinyalakan karena saat ini sedang digunakan oleh aplikasi lain (seperti Zoom, Skype, Microsoft Teams, Google Meet, OBS Studio, kamera bawaan Windows, atau tab browser lain). Silakan tutup aplikasi/tab tersebut terlebih dahulu, kemudian klik tombol <strong>Aktifkan Kamera</strong> kembali.";
+            }
+            if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+                return "<strong>Perangkat Kamera Tidak Ditemukan.</strong> Browser tidak mendeteksi adanya perangkat webcam/kamera di laptop Anda. Pastikan kamera internal laptop telah diaktifkan (beberapa laptop memiliki tombol switch privasi atau tombol F1-F12 fisik untuk mematikan kamera) atau webcam eksternal tercolok dengan benar.";
+            }
+            if (name === "SecurityError") {
+                return "<strong>Keamanan Browser Memblokir Kamera.</strong> Halaman ini dijalankan di luar lingkungan aman (Secure Context). Browser modern memblokir kamera kecuali halaman dibuka melalui <strong>HTTPS</strong> atau <strong>localhost</strong> (misalnya: <strong>http://localhost/risa/barcode-generator/checker.html</strong>).";
+            }
+            return `<strong>Kesalahan Sistem (${name}):</strong> ${err.message || err}. Pastikan perangkat kamera Anda aktif dan berikan izin akses kamera di pengaturan browser Anda.`;
+        }
+
+        function initializeCameraList() {
+            const select = document.getElementById('camera-select');
+            const btn = document.getElementById('camera-toggle-btn');
+            
+            // 1. Check file:// protocol
+            if (window.location.protocol === 'file:') {
+                showCameraError(
+                    "Protokol file:// Terdeteksi",
+                    "Browser memblokir kamera saat halaman HTML dibuka langsung sebagai file lokal. Silakan buka halaman ini melalui web server lokal Laragon Anda dengan alamat: <br><strong style='user-select: all; font-family: monospace; background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px;'>http://localhost/risa/barcode-generator/checker.html</strong> atau <strong style='user-select: all; font-family: monospace; background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px;'>http://127.0.0.1/risa/barcode-generator/checker.html</strong> agar kamera dapat diakses."
+                );
+                select.innerHTML = `<option value="">Akses file:// Diblokir</option>`;
+                btn.disabled = true;
+                return;
+            }
+
+            // 2. Check Secure Context (Warning only, do not block because flags/overrides can make it work)
+            if (window.isSecureContext === false) {
+                showCameraError(
+                    "Peringatan: Lingkungan Tidak Aman (Insecure Context)",
+                    "Akses kamera kemungkinan akan diblokir oleh browser karena koneksi ini tidak aman (HTTP). Jika Anda menggunakan HP Android, pastikan Anda telah mengaktifkan Chrome Flags sesuai petunjuk di bawah agar kamera dapat diakses secara lokal. Jika Anda membuka via terowongan HTTPS (seperti ngrok/localtunnel), peringatan ini dapat diabaikan."
+                );
+            }
+
+            // 3. Check mediaDevices support
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showCameraError(
+                    "Fitur Kamera Tidak Didukung",
+                    "Browser yang Anda gunakan tidak mendukung API akses kamera (mediaDevices). Silakan gunakan browser modern seperti Google Chrome, Microsoft Edge, atau Mozilla Firefox."
+                );
+                select.innerHTML = `<option value="">Tidak Didukung</option>`;
+                btn.disabled = true;
+                return;
+            }
+
+            select.innerHTML = `<option value="">Meminta izin kamera...</option>`;
+            btn.disabled = true;
+            hideCameraError();
+
+            // Request temporary camera access to trigger the browser prompt and get labels
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    // Release the camera tracks immediately
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    // Enumerate cameras
+                    return Html5Qrcode.getCameras();
+                })
+                .then(devices => {
+                    if (devices && devices.length) {
+                        let selectedIndex = 0;
+                        devices.forEach((device, idx) => {
+                            const label = (device.label || "").toLowerCase();
+                            if (label.includes("back") || label.includes("rear") || label.includes("belakang") || label.includes("environment")) {
+                                selectedIndex = idx;
+                            }
+                        });
+                        select.innerHTML = devices.map((device, idx) => `
+                            <option value="${device.id}" ${idx === selectedIndex ? 'selected' : ''}>${device.label || `Kamera ${idx + 1}`}</option>
+                        `).join('');
+                        btn.disabled = false;
+                        hideCameraError();
+                    } else {
+                        select.innerHTML = `<option value="">Kamera tidak ditemukan</option>`;
+                        showCameraError(
+                            "Kamera Tidak Terdeteksi",
+                            "Tidak ada perangkat kamera yang aktif atau terdeteksi di komputer Anda."
+                        );
+                    }
+                })
+                .catch(err => {
+                    select.innerHTML = `<option value="">Gagal Mengakses Kamera</option>`;
+                    btn.disabled = true;
+                    showCameraError("Akses Kamera Gagal", getFriendlyCameraError(err));
+                });
+        }
+
+        function toggleCamera() {
+            if (isScannerRunning) {
+                stopCameraScanner();
+            } else {
+                startCameraScanner();
+            }
+        }
+
+        function startCameraScanner() {
+            const cameraId = document.getElementById('camera-select').value;
+            const btn = document.getElementById('camera-toggle-btn');
+            
+            if (!cameraId) {
+                alert("Pilih kamera terlebih dahulu.");
+                return;
+            }
+            
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader", {
+                    formatsToSupport: [
+                        Html5QrcodeSupportedFormats.CODE_128,
+                        Html5QrcodeSupportedFormats.CODE_39,
+                        Html5QrcodeSupportedFormats.EAN_13,
+                        Html5QrcodeSupportedFormats.QR_CODE
+                    ],
+                    experimentalFeatures: {
+                        useBarCodeDetectorIfSupported: true
+                    }
+                });
+            }
+            
+            btn.textContent = "Mengaktifkan...";
+            btn.disabled = true;
+            hideCameraError();
+
+            // Start QR / Barcode Scan with higher FPS and resolution constraints for 1D barcodes
+            // We scan the entire camera feed (no qrbox) to preserve quiet zones for 1D barcode decoding
+            html5QrCode.start(
+                cameraId, 
+                {
+                    fps: 20,
+                    videoConstraints: {
+                        deviceId: { exact: cameraId },
+                        width: { min: 640, ideal: 1280, max: 1920 },
+                        height: { min: 480, ideal: 720, max: 1080 },
+                        focusMode: "continuous"
+                    }
+                },
+                (decodedText, decodedResult) => {
+                    processScannedCode(decodedText);
+                    stopCameraScanner();
+                    
+                    // Automatically restart camera after 1.5 seconds so they can scan next items
+                    setTimeout(() => {
+                        const currentTab = document.querySelector('.tab-content.active').id;
+                        if (currentTab === 'tab-camera') {
+                            startCameraScanner();
+                        }
+                    }, 1500);
+                },
+                (errorMessage) => {
+                    // Ignore noise/unscanned frames
+                }
+            ).then(() => {
+                isScannerRunning = true;
+                btn.textContent = "Matikan Kamera";
+                btn.className = "btn btn-danger";
+                btn.disabled = false;
+            }).catch(err => {
+                console.error("Gagal menjalankan kamera: ", err);
+                btn.textContent = "Aktifkan Kamera";
+                btn.className = "btn btn-primary";
+                btn.disabled = false;
+                isScannerRunning = false;
+                showCameraError("Gagal Memulai Pemindaian", getFriendlyCameraError(err));
+            });
+        }
+
+        function stopCameraScanner() {
+            const btn = document.getElementById('camera-toggle-btn');
+            if (html5QrCode && isScannerRunning) {
+                return html5QrCode.stop().then(() => {
+                    isScannerRunning = false;
+                    btn.textContent = "Aktifkan Kamera";
+                    btn.className = "btn btn-primary";
+                }).catch(err => {
+                    console.error("Gagal mematikan kamera: ", err);
+                });
+            }
+            return Promise.resolve();
+        }
+
+        // Camera select change listener (to auto-restart camera on change)
+        document.getElementById('camera-select').addEventListener('change', () => {
+            if (isScannerRunning) {
+                stopCameraScanner().then(() => {
+                    startCameraScanner();
+                }).catch(err => {
+                    console.error("Gagal berpindah kamera: ", err);
+                });
+            }
+        });
+
+        // File/Image Barcode Scanner Logic
+        const uploadZone = document.getElementById('upload-zone');
+        const fileInput = document.getElementById('barcode-file-input');
+        const uploadPreview = document.getElementById('upload-preview');
+        let fileQrScanner = null;
+
+        // Open file dialog when clicking the upload zone
+        uploadZone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Drag & Drop event listeners
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadZone.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadZone.classList.remove('dragover');
+            }, false);
+        });
+
+        // Drop event
+        uploadZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files && files.length) {
+                fileInput.files = files;
+                handleBarcodeFile(files[0]);
+            }
+        });
+
+        // File selection change event
+        fileInput.addEventListener('change', (e) => {
+            if (fileInput.files && fileInput.files.length) {
+                handleBarcodeFile(fileInput.files[0]);
+            }
+        });
+
+        // Helper function to resize large images before scanning to prevent mobile browser crashes / hangs
+        function resizeImageIfNeeded(file, callback) {
+            if (file.name.endsWith('.svg') || file.type === 'image/svg+xml') {
+                callback(file);
+                return;
+            }
+            
+            const img = new Image();
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                img.src = e.target.result;
+            };
+            
+            img.onload = () => {
+                const maxDim = 1000;
+                if (img.width <= maxDim && img.height <= maxDim) {
+                    callback(file);
+                    return;
+                }
+                
+                let width = img.width;
+                let height = img.height;
+                if (width > height) {
+                    if (width > maxDim) {
+                        height = Math.round(height * maxDim / width);
+                        width = maxDim;
+                    }
+                } else {
+                    if (height > maxDim) {
+                        width = Math.round(width * maxDim / height);
+                        height = maxDim;
+                    }
+                }
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                canvas.toBlob((blob) => {
+                    const resizedFile = new File([blob], file.name, {
+                        type: 'image/jpeg',
+                        lastModified: Date.now()
+                    });
+                    callback(resizedFile);
+                }, 'image/jpeg', 0.85);
+            };
+            
+            img.onerror = () => {
+                callback(file);
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        function handleBarcodeFile(file) {
+            if (!file) return;
+
+            // 1. Show file preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                uploadPreview.src = e.target.result;
+                uploadPreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+
+            // 2. Status indicator
+            const resultContainer = document.getElementById('result-container');
+            resultContainer.innerHTML = `
+                <div class="result-placeholder">
+                    <div style="width: 24px; height: 24px; border: 3px solid rgba(59, 130, 246, 0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 8px;"></div>
+                    <style>
+                        @keyframes spin {
+                            to { transform: rotate(360deg); }
+                        }
+                    </style>
+                    <p>Menganalisis berkas barcode...</p>
+                </div>
+            `;
+
+            // Helper function to scan image via html5-qrcode (fallback for raster images)
+            function runImageScanner(fileToScan) {
+                if (!fileQrScanner) {
+                    fileQrScanner = new Html5Qrcode("file-qr-reader", {
+                        formatsToSupport: [
+                            Html5QrcodeSupportedFormats.CODE_128,
+                            Html5QrcodeSupportedFormats.CODE_39,
+                            Html5QrcodeSupportedFormats.EAN_13,
+                            Html5QrcodeSupportedFormats.QR_CODE
+                        ],
+                        experimentalFeatures: {
+                            useBarCodeDetectorIfSupported: true
+                        }
+                    });
+                }
+
+                fileQrScanner.scanFile(fileToScan, false)
+                    .then(decodedText => {
+                        processScannedCode(decodedText);
+                    })
+                    .catch(err => {
+                        console.error("Gagal mendecode barcode dari gambar:", err);
+                        playBeep(false);
+                        triggerHaptic(false);
+                        
+                        resultContainer.innerHTML = `
+                            <div class="result-display">
+                                <div class="status-badge invalid">✗ Gagal Memindai Gambar</div>
+                                <div class="product-info-card" style="border-color: var(--error-border); background-color: var(--error-bg);">
+                                    <div class="info-field">
+                                        <span class="info-label" style="color: var(--error);">Barcode Tidak Terbaca</span>
+                                        <span class="info-val-text" style="font-weight: bold; margin-top: 6px;">
+                                            Sistem gagal mendeteksi barcode pada gambar ini.
+                                        </span>
+                                    </div>
+                                    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-top: 8px;">
+                                        <strong>Saran Perbaikan:</strong>
+                                        <br>
+                                        1. Pastikan gambar memiliki resolusi tinggi dan terfokus pada garis barcode.
+                                        <br>
+                                        2. Gunakan barcode berformat PNG jika memindai sebagai file.
+                                        <br>
+                                        3. Hindari memotong bagian barcode (pastikan seluruh garis barcode masuk ke dalam foto).
+                                    </p>
+                                </div>
+                            </div>
+                        `;
+                    });
+            }
+
+            // 3. Scan file
+            if (file.name.endsWith('.svg') || file.type === 'image/svg+xml') {
+                // If it is an SVG, read the text directly to extract the embedded data-code attribute
+                const textReader = new FileReader();
+                textReader.onload = (e) => {
+                    const svgText = e.target.result;
+                    const match = svgText.match(/data-code=["']([^"']+)["']/);
+                    if (match && match[1]) {
+                        processScannedCode(match[1]);
+                    } else {
+                        // Fallback to image scanning if data-code is not found
+                        runImageScanner(file);
+                    }
+                };
+                textReader.readAsText(file);
+            } else {
+                resizeImageIfNeeded(file, (processedFile) => {
+                    runImageScanner(processedFile);
+                });
+            }
+        }
+    </script>
+
+    <!-- Hidden div for scanning files offline/manually -->
+    <div id="file-qr-reader" style="display: none;"></div>
+</body>
+</html>

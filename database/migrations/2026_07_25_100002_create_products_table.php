@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('code', 100)->unique()->comment('Kode SKU internal, contoh: OF 1010 04');
             $table->string('name', 255)->comment('Nama produk, contoh: 4.5 mm Semi Tubular Plate 4 Holes');
             $table->text('description')->nullable();
+            $table->integer('quantity')->default(0)->comment('Jumlah stok fisik produk saat ini');
             $table->boolean('is_published')->default(false)->comment('Tampil di company profile website atau tidak');
             $table->timestamp('published_at')->nullable();
             $table->foreignId('published_by')

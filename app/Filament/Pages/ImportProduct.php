@@ -6,6 +6,7 @@ use App\Domain\Import\Actions\ApplyProductImport;
 use App\Domain\Import\Actions\GenerateProductTemplate;
 use App\Domain\Import\Data\ProductImportRow;
 use App\Domain\Import\Parsers\ProductImportParser;
+use App\Filament\Resources\ProductResource;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -26,7 +27,7 @@ class ImportProduct extends Page implements HasForms
 
     protected static ?string $navigationGroup = 'Master Data';
 
-    protected static ?string $navigationLabel = 'Import Produk';
+    protected static ?string $navigationLabel = 'Import Produk Excel';
 
     protected static ?string $title = 'Import Produk dari Excel';
 
@@ -155,6 +156,11 @@ class ImportProduct extends Page implements HasForms
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('back')
+                ->label('Kembali')
+                ->icon('heroicon-o-arrow-left')
+                ->color('gray')
+                ->url(ProductResource::getUrl('index')),
             Action::make('downloadTemplate')
                 ->label('Download Template')
                 ->icon('heroicon-o-arrow-down-tray')

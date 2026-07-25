@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RISA Standalone - Pendataan & Outbound Barcode System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-rgb: 37, 99, 235;
+            --success: #10b981;
+            --success-hover: #059669;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            
+            --bg-base: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-glass: rgba(255, 255, 255, 0.85);
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --border-color: #e2e8f0;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --primary: #3b82f6;
+            --primary-hover: #60a5fa;
+            --primary-rgb: 59, 130, 246;
+            --bg-base: #0f172a;
+            --bg-card: #1e293b;
+            --bg-glass: rgba(30, 41, 59, 0.85);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Navigation */
+        .navbar {
+            background-color: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 14px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .brand-logo {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 20px;
+            box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.3);
+        }
+
+        .brand-text h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .brand-text p {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-decoration: none;
+            border: 1px solid transparent;
+            transition: all 0.15s;
+        }
+
+        .nav-btn:hover {
+            color: var(--primary);
+            background-color: rgba(var(--primary-rgb), 0.08);
+        }
+
+        .nav-btn.active {
+            color: var(--primary);
+            background-color: var(--bg-card);
+            border-color: var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon-btn {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            width: 38px;
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-main);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .icon-btn:hover {
+            background-color: var(--border-color);
+        }
+
+        /* Layout Container */
+        .container {
+            max-width: 1360px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            flex: 1;
+        }
+
+        /* Header Title Banner */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .page-header-title h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .page-header-title p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .standalone-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Statistics Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+        }
+
+        .stat-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            shrink: 0;
+        }
+
+        .stat-blue { background-color: rgba(37, 99, 235, 0.1); color: var(--primary); }
+        .stat-green { background-color: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .stat-purple { background-color: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+        .stat-amber { background-color: rgba(245, 158, 11, 0.1); color: var(--warning); }
+
+        .stat-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--text-main);
+            line-height: 1.2;
+            margin-top: 2px;
+        }
+
+        /* Content Panel Tabs */
+        .main-panel {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel-tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            background: none;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: var(--primary);
+            background-color: var(--bg-base);
+        }
+
+        .tab-btn.active {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(var(--primary-rgb), 0.25);
+        }
+
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        /* Form Inputs & Elements */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            background-color: var(--bg-base);
+            padding: 18px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-card);
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
+        }
+
+        /* Scan Box Highlighted */
+        .scan-box-wrapper {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, rgba(29, 78, 216, 0.1) 100%);
+            border: 2px dashed var(--primary);
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .scan-input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .scan-input {
+            flex: 1;
+            font-family: 'Space Mono', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 2px solid var(--primary);
+            background-color: var(--bg-card);
+            color: var(--text-main);
+            outline: none;
+        }
+
+        /* Scan Queue Table */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        .data-table th {
+            background-color: var(--bg-base);
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tr:hover td {
+            background-color: rgba(var(--primary-rgb), 0.02);
+        }
+
+        .code-badge {
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            padding: 4px 8px;
+            background-color: var(--bg-base);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--primary);
+            display: inline-block;
+        }
+
+        /* Quantity Counter */
+        .qty-control {
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+            background-color: var(--bg-card);
+        }
+
+        .qty-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: var(--bg-base);
+            color: var(--text-main);
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qty-btn:hover {
+            background-color: var(--border-color);
+        }
+
+        .qty-val {
+            width: 40px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 13px;
+            border: none;
+            background: transparent;
+            color: var(--text-main);
+            outline: none;
+        }
+
+        /* Action Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(var(--primary-rgb), 0.25);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.25);
+        }
+
+        .btn-success:hover {
+            background-color: var(--success-hover);
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-base);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--border-color);
+        }
+
+        .btn-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:hover {
+            background-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+
+        .flex-row-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        /* Filter Controls */
+        .search-filter-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            flex: 1;
+            min-width: 260px;
+        }
+
+        /* Modal Popup */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background-color: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            max-width: 650px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .modal-body {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            background-color: var(--bg-base);
+        }
+
+        /* Printable Receipt / Surat Jalan Format */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-receipt, #printable-receipt * {
+                visibility: visible;
+            }
+            #printable-receipt {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <nav class="navbar">
+        <a href="index.html" class="brand">
+            <div class="brand-logo">R</div>
+            <div class="brand-text">
+                <h1>RISA Standalone System</h1>
+                <p>PT RISA IMPLANTAMA</p>
+            </div>
+        </a>
+
+        <div class="nav-links">
+            <a href="index.html" class="nav-btn">
+                🖨️ Cetak Barcode Label
+            </a>
+            <a href="checker.html" class="nav-btn">
+                🔍 Verifikasi Scanner
+            </a>
+            <a href="pendataan.html" class="nav-btn active">
+                📊 Pendataan & Outbound
+            </a>
+        </div>
+
+        <div class="nav-actions">
+            <button class="btn btn-secondary btn-sm" onclick="exportDataJSON()" title="Export Cadangan Data Pendataan (JSON)">
+                💾 Backup Data
+            </button>
+            <button class="icon-btn" id="theme-toggle" title="Ganti Tema (Gelap/Terang)">
+                🌓
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Workspace Container -->
+    <div class="container">
+        
+        <!-- Header & Status Banner -->
+        <div class="page-header">
+            <div class="page-header-title">
+                <h2>Pendataan & Monitoring Barang Keluar (Outbound)</h2>
+                <p>Sistem pencatatan terpisah khusus barcode standalone untuk melacak produk yang didistribusikan.</p>
+            </div>
+            <div>
+                <span class="standalone-badge">
+                    ⚡ Mode Standalone Aktif (Offline Ready)
+                </span>
+            </div>
+        </div>
+
+        <!-- Dashboard Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon stat-blue">📦</div>
+                <div class="stat-info">
+                    <span class="stat-label">Master Katalog Barcode</span>
+                    <span class="stat-value" id="stat-total-catalog">0</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon stat-green">🚚</div>
+                <div class="stat-info">
+                    <span class="stat-label">Total Transaksi Outbound</span>
+                    <span class="stat-value" id="stat-total-transactions">0</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon stat-purple">🔢</div>
+                <div class="stat-info">
+                    <span class="stat-label">Total Barang Keluar (pcs)</span>
+                    <span class="stat-value" id="stat-total-items-out">0</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon stat-amber">📅</div>
+                <div class="stat-info">
+                    <span class="stat-label">Transaksi Hari Ini</span>
+                    <span class="stat-value" id="stat-today-count">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Work Panel -->
+        <div class="main-panel">
+            
+            <!-- Panel Navigation Tabs -->
+            <div class="panel-tabs">
+                <button class="tab-btn active" onclick="switchPanelTab('new-outbound')">
+                    ➕ Input Pendataan Outbound Baru
+                </button>
+                <button class="tab-btn" onclick="switchPanelTab('history')">
+                    📋 Riwayat Pendataan & Transaksi
+                </button>
+                <button class="tab-btn" onclick="switchPanelTab('catalog-recap')">
+                    📦 Rekap Pendataan Stok & Katalog Barcode
+                </button>
+            </div>
+
+            <!-- TAB 1: INPUT PENDATAAN BARU -->
+            <div id="tab-new-outbound" class="tab-content active">
+                
+                <!-- Document Info Metadata Header -->
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="doc-no">No. Dokumen / Surat Jalan</label>
+                        <input type="text" id="doc-no" class="form-control" style="font-family: 'Space Mono', monospace; font-weight: bold;">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="doc-date">Tanggal Pengiriman / Outbound</label>
+                        <input type="date" id="doc-date" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="doc-destination">Tujuan / Customer / Rumah Sakit</label>
+                        <input type="text" id="doc-destination" class="form-control" placeholder="Contoh: RS Utama Medika / Cabang Surabaya">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="doc-notes">Catatan / Keterangan</label>
+                        <input type="text" id="doc-notes" class="form-control" placeholder="Opsional: No PO, kurir, dll...">
+                    </div>
+                </div>
+
+                <!-- Scanner Fast Input Box -->
+                <div class="scan-box-wrapper">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 13px; font-weight: 700; color: var(--primary);">
+                            📡 Area Pemindaian Barcode (Arahkan Barcode Scanner Gun ke sini)
+                        </span>
+                        <span style="font-size: 11px; color: var(--text-muted);">
+                            Autofocus Aktif • Tekan Enter Setelah Scan
+                        </span>
+                    </div>
+
+                    <div class="scan-input-row">
+                        <input type="text" id="scan-input" class="scan-input" placeholder="Pindai barcode produk di sini (misal: OF 1010 04)..." autofocus autocomplete="off">
+                        <button class="btn btn-primary" onclick="addScannedCodeFromInput()">
+                            ➕ Tambahkan
+                        </button>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; align-items: center; margin-top: 4px;">
+                        <span style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Atau Pilih dari Katalog:</span>
+                        <select id="quick-catalog-select" class="form-control" style="flex: 1; font-size: 13px;" onchange="selectCatalogItem(this.value)">
+                            <option value="">-- Pilih Produk Manual --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Queue Items Table -->
+                <div class="flex-row-actions">
+                    <h3 style="font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700;">
+                        Daftar Produk yang Di-scan (Item Queue)
+                    </h3>
+                    <span style="font-size: 13px; font-weight: 700; color: var(--primary);">
+                        Total Item: <span id="queue-item-count">0</span> Pcs
+                    </span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">No</th>
+                                <th style="width: 140px;">Kode Barcode</th>
+                                <th>Nama Produk</th>
+                                <th>Spesifikasi</th>
+                                <th style="width: 140px; text-align: center;">Jumlah (Pcs)</th>
+                                <th style="width: 80px; text-align: center;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="queue-tbody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                                    Belum ada produk yang dipindai. Arahkan scanner barcode di atas untuk memulai pendataan.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Save & Clear Action Footer -->
+                <div class="flex-row-actions" style="margin-top: 10px;">
+                    <button class="btn btn-danger btn-sm" onclick="clearQueue()">
+                        🗑️ Reset Daftar Scan
+                    </button>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" onclick="printQueueDraft()">
+                            🖨️ Cetak Ringkasan Draff
+                        </button>
+                        <button class="btn btn-success" onclick="saveOutboundTransaction()">
+                            💾 Simpan Pendataan Outbound
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: RIWAYAT TRANSAKSI & PENDATAAN -->
+            <div id="tab-history" class="tab-content">
+                <div class="search-filter-bar">
+                    <div class="search-input-wrapper">
+                        <input type="text" id="history-search" class="form-control" placeholder="Cari no. dokumen, tujuan, atau nama produk..." oninput="renderHistoryTable()">
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="clearAllHistoryData()">
+                        🗑️ Hapus Semua Riwayat
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>No. Dokumen</th>
+                                <th>Tanggal & Waktu</th>
+                                <th>Tujuan / Customer</th>
+                                <th>Catatan</th>
+                                <th style="text-align: center;">Total Items</th>
+                                <th style="text-align: center;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-tbody">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 3: REKAP STOK & CATALOG MASTER -->
+            <div id="tab-catalog-recap" class="tab-content">
+                <div class="search-filter-bar">
+                    <div class="search-input-wrapper">
+                        <input type="text" id="catalog-search" class="form-control" placeholder="Cari berdasarkan kode, nama, atau spesifikasi..." oninput="renderCatalogRecapTable()">
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="exportCatalogRecapCSV()">
+                        📊 Export CSV Rekap
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 140px;">Kode Barcode</th>
+                                <th>Nama Produk</th>
+                                <th>Spesifikasi</th>
+                                <th style="text-align: center; width: 140px;">Total Outbound</th>
+                                <th style="text-align: center; width: 140px;">Visual Barcode</th>
+                            </tr>
+                        </thead>
+                        <tbody id="catalog-recap-tbody">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Detail Transaction Modal -->
+    <div class="modal-overlay" id="detail-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modal-title">Detail Pendataan Outbound</h3>
+                <button class="icon-btn" onclick="closeModal('detail-modal')" style="width: 30px; height: 30px;">✕</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Content injected via JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('detail-modal')">Tutup</button>
+                <button class="btn btn-primary" id="modal-print-btn">🖨️ Cetak Surat Jalan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Printable Receipt Container -->
+    <div id="printable-receipt" style="display: none;"></div>
+
+    <!-- Import Barcode Master Data -->
+    <script src="barcodes_data.js"></script>
+
+    <script>
+        // Data State Management
+        let scanQueue = [];
+        let outboundHistory = JSON.parse(localStorage.getItem('risa_standalone_outbound') || '[]');
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            generateDocNo();
+            setTodayDate();
+            populateCatalogDropdown();
+            seedSampleDataIfEmpty();
+            updateDashboardStats();
+            renderQueueTable();
+            renderHistoryTable();
+            renderCatalogRecapTable();
+            setupAutofocus();
+        });
+
+        // Theme Toggle
+        function initTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('theme-toggle');
+            if (localStorage.getItem('theme') === 'dark') {
+                body.setAttribute('data-theme', 'dark');
+            }
+            themeBtn.addEventListener('click', () => {
+                const isDark = body.getAttribute('data-theme') === 'dark';
+                if (isDark) {
+                    body.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    body.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+        }
+
+        // Auto Generate Document Number
+        function generateDocNo() {
+            const dateStr = new Date().toISOString().slice(0,10).replace(/-/g, '');
+            const randNum = String(outboundHistory.length + 1).padStart(3, '0');
+            document.getElementById('doc-no').value = `OUT-${dateStr}-${randNum}`;
+        }
+
+        function setTodayDate() {
+            document.getElementById('doc-date').value = new Date().toISOString().slice(0, 10);
+        }
+
+        // Seed Sample Data if Empty for Demonstration
+        function seedSampleDataIfEmpty() {
+            if (outboundHistory.length === 0 && typeof barcodeData !== 'undefined' && barcodeData.length > 0) {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                const dateStr = now.toISOString().slice(0, 10);
+
+                const sample1 = {
+                    docNo: `OUT-${dateStr.replace(/-/g, '')}-001`,
+                    date: dateStr,
+                    timestamp: `${dateStr} ${timeStr}`,
+                    destination: 'RS Royal Surabaya',
+                    notes: 'Pengiriman Alkes Bedah Urgen',
+                    items: [
+                        { kode: barcodeData[0].kode, nama: barcodeData[0].nama_produk, spec: barcodeData[0].spesifikasi, qty: 5 },
+                        { kode: barcodeData[1].kode, nama: barcodeData[1].nama_produk, spec: barcodeData[1].spesifikasi, qty: 3 }
+                    ],
+                    totalQty: 8
+                };
+
+                outboundHistory.push(sample1);
+                localStorage.setItem('risa_standalone_outbound', JSON.stringify(outboundHistory));
+            }
+        }
+
+        // Populate Catalog Dropdown Select
+        function populateCatalogDropdown() {
+            const select = document.getElementById('quick-catalog-select');
+            if (typeof barcodeData === 'undefined') return;
+
+            select.innerHTML = '<option value="">-- Pilih Produk Manual dari Katalog --</option>' +
+                barcodeData.map(item => `<option value="${item.kode}">${item.kode} - ${item.nama_produk}</option>`).join('');
+        }
+
+        function selectCatalogItem(code) {
+            if (code) {
+                processBarcodeScan(code);
+                document.getElementById('quick-catalog-select').value = '';
+            }
+        }
+
+        // Handle Autofocus for Physical Scanner Gun
+        const scanInput = document.getElementById('scan-input');
+        
+        function setupAutofocus() {
+            scanInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addScannedCodeFromInput();
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                const activeTab = document.querySelector('.tab-content.active').id;
+                if (activeTab === 'tab-new-outbound' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT' && e.target.tagName !== 'BUTTON') {
+                    setTimeout(() => scanInput.focus(), 100);
+                }
+            });
+        }
+
+        function addScannedCodeFromInput() {
+            const code = scanInput.value.trim();
+            if (code) {
+                processBarcodeScan(code);
+                scanInput.value = '';
+                scanInput.focus();
+            }
+        }
+
+        // Process Barcode Logic
+        function processBarcodeScan(rawCode) {
+            if (typeof barcodeData === 'undefined') {
+                alert("Data barcode master belum terisi!");
+                return;
+            }
+
+            const cleanCode = rawCode.trim().toUpperCase();
+            const product = barcodeData.find(p => p.kode.trim().toUpperCase() === cleanCode);
+
+            if (!product) {
+                playBeepSound(false);
+                alert(`⚠️ Barcode '${cleanCode}' tidak terdaftar dalam katalog master!`);
+                return;
+            }
+
+            playBeepSound(true);
+
+            // Check if item already exists in current queue
+            const existing = scanQueue.find(item => item.kode.trim().toUpperCase() === cleanCode);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                scanQueue.push({
+                    kode: product.kode,
+                    nama: product.nama_produk,
+                    spec: product.spesifikasi,
+                    svg: product.svg,
+                    qty: 1
+                });
+            }
+
+            renderQueueTable();
+        }
+
+        // Sound Beep Feedback
+        function playBeepSound(isSuccess) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                if (isSuccess) {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(1000, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.12);
+                } else {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(250, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.35);
+                }
+            } catch (e) {}
+        }
+
+        // Render Queue Table
+        function renderQueueTable() {
+            const tbody = document.getElementById('queue-tbody');
+            const totalCountSpan = document.getElementById('queue-item-count');
+
+            let totalPcs = 0;
+            scanQueue.forEach(item => totalPcs += item.qty);
+            totalCountSpan.textContent = totalPcs;
+
+            if (scanQueue.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                            Belum ada produk yang dipindai. Arahkan scanner barcode di atas untuk memulai pendataan.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = scanQueue.map((item, index) => `
+                <tr>
+                    <td style="text-align: center; font-weight: bold;">${index + 1}</td>
+                    <td><span class="code-badge">${item.kode}</span></td>
+                    <td style="font-weight: 600;">${item.nama}</td>
+                    <td style="font-size: 12px; color: var(--text-muted); max-width: 250px;">${item.spec}</td>
+                    <td style="text-align: center;">
+                        <div class="qty-control">
+                            <button class="qty-btn" onclick="updateQueueQty(${index}, -1)">-</button>
+                            <input type="text" class="qty-val" value="${item.qty}" onchange="setQueueQty(${index}, this.value)">
+                            <button class="qty-btn" onclick="updateQueueQty(${index}, 1)">+</button>
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <button class="btn btn-danger btn-sm" onclick="removeQueueItem(${index})" title="Hapus Item">✕</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateQueueQty(index, delta) {
+            scanQueue[index].qty += delta;
+            if (scanQueue[index].qty <= 0) {
+                scanQueue.splice(index, 1);
+            }
+            renderQueueTable();
+        }
+
+        function setQueueQty(index, val) {
+            const num = parseInt(val) || 1;
+            scanQueue[index].qty = Math.max(1, num);
+            renderQueueTable();
+        }
+
+        function removeQueueItem(index) {
+            scanQueue.splice(index, 1);
+            renderQueueTable();
+        }
+
+        function clearQueue() {
+            if (scanQueue.length === 0) return;
+            if (confirm("Kosongkan daftar scan produk saat ini?")) {
+                scanQueue = [];
+                renderQueueTable();
+            }
+        }
+
+        // Save Outbound Transaction
+        function saveOutboundTransaction() {
+            if (scanQueue.length === 0) {
+                alert("⚠️ Daftar scan produk masih kosong! Pindai minimal 1 produk.");
+                return;
+            }
+
+            const docNo = document.getElementById('doc-no').value.trim();
+            const date = document.getElementById('doc-date').value;
+            const destination = document.getElementById('doc-destination').value.trim() || 'Umum';
+            const notes = document.getElementById('doc-notes').value.trim() || '-';
+
+            let totalQty = 0;
+            scanQueue.forEach(item => totalQty += item.qty);
+
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+            const newRecord = {
+                docNo: docNo,
+                date: date,
+                timestamp: `${date} ${timeStr}`,
+                destination: destination,
+                notes: notes,
+                items: JSON.parse(JSON.stringify(scanQueue)),
+                totalQty: totalQty
+            };
+
+            outboundHistory.unshift(newRecord);
+            localStorage.setItem('risa_standalone_outbound', JSON.stringify(outboundHistory));
+
+            alert(`✅ Pendataan Outbound (${docNo}) Berhasil Disimpan!`);
+
+            // Reset form
+            scanQueue = [];
+            document.getElementById('doc-destination').value = '';
+            document.getElementById('doc-notes').value = '';
+            generateDocNo();
+            renderQueueTable();
+            updateDashboardStats();
+            renderHistoryTable();
+            renderCatalogRecapTable();
+        }
+
+        // Dashboard Stats Counter
+        function updateDashboardStats() {
+            const totalCatalog = typeof barcodeData !== 'undefined' ? barcodeData.length : 0;
+            const totalTransactions = outboundHistory.length;
+            
+            let totalItemsOut = 0;
+            let todayCount = 0;
+            const todayStr = new Date().toISOString().slice(0, 10);
+
+            outboundHistory.forEach(rec => {
+                totalItemsOut += rec.totalQty || 0;
+                if (rec.date === todayStr) {
+                    todayCount++;
+                }
+            });
+
+            document.getElementById('stat-total-catalog').textContent = totalCatalog;
+            document.getElementById('stat-total-transactions').textContent = totalTransactions;
+            document.getElementById('stat-total-items-out').textContent = totalItemsOut;
+            document.getElementById('stat-today-count').textContent = todayCount;
+        }
+
+        // Render History Table
+        function renderHistoryTable() {
+            const tbody = document.getElementById('history-tbody');
+            const searchVal = (document.getElementById('history-search').value || '').toLowerCase();
+
+            const filtered = outboundHistory.filter(rec => {
+                return rec.docNo.toLowerCase().includes(searchVal) ||
+                       rec.destination.toLowerCase().includes(searchVal) ||
+                       rec.notes.toLowerCase().includes(searchVal) ||
+                       rec.items.some(i => i.nama.toLowerCase().includes(searchVal) || i.kode.toLowerCase().includes(searchVal));
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                            Tidak ada riwayat transaksi pendataan outbound.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map((rec, index) => `
+                <tr>
+                    <td><span class="code-badge">${rec.docNo}</span></td>
+                    <td style="font-size: 12px; color: var(--text-muted);">${rec.timestamp || rec.date}</td>
+                    <td style="font-weight: 600;">${rec.destination}</td>
+                    <td style="font-size: 12px; color: var(--text-muted);">${rec.notes}</td>
+                    <td style="text-align: center; font-weight: bold; color: var(--primary);">${rec.totalQty} pcs</td>
+                    <td style="text-align: center;">
+                        <div style="display: flex; gap: 6px; justify-content: center;">
+                            <button class="btn btn-secondary btn-sm" onclick="showHistoryDetail('${rec.docNo}')" title="Lihat Detail">👁️ Detail</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteHistoryRecord('${rec.docNo}')" title="Hapus Transaksi">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function showHistoryDetail(docNo) {
+            const rec = outboundHistory.find(r => r.docNo === docNo);
+            if (!rec) return;
+
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            const printBtn = document.getElementById('modal-print-btn');
+
+            modalTitle.textContent = `Surat Jalan Outbound - ${rec.docNo}`;
+
+            modalBody.innerHTML = `
+                <div style="background-color: var(--bg-base); padding: 14px; border-radius: 10px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
+                    <div><strong>Tujuan / Penerima:</strong> ${rec.destination}</div>
+                    <div><strong>Tanggal Outbound:</strong> ${rec.timestamp || rec.date}</div>
+                    <div><strong>Catatan:</strong> ${rec.notes}</div>
+                </div>
+
+                <h4 style="font-family: 'Outfit', sans-serif; font-size: 15px; margin-top: 10px;">Daftar Produk (${rec.totalQty} Pcs)</h4>
+                
+                <table class="data-table" style="font-size: 12px;">
+                    <thead>
+                        <tr>
+                            <th>Kode</th>
+                            <th>Nama Produk</th>
+                            <th style="text-align: center;">Qty</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rec.items.map(item => `
+                            <tr>
+                                <td><span class="code-badge">${item.kode}</span></td>
+                                <td>${item.nama}</td>
+                                <td style="text-align: center; font-weight: bold;">${item.qty} pcs</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            printBtn.onclick = () => printReceiptDoc(rec);
+            document.getElementById('detail-modal').style.display = 'flex';
+        }
+
+        function printReceiptDoc(rec) {
+            const printContainer = document.getElementById('printable-receipt');
+            printContainer.innerHTML = `
+                <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; color: #000;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 20px;">
+                        <div>
+                            <h2 style="margin: 0; font-size: 20px;">PT RISA IMPLANTAMA</h2>
+                            <p style="margin: 4px 0 0 0; font-size: 12px;">PENDATAAN BARANG KELUAR (STANDALONE OUTBOUND)</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <h3 style="margin: 0; font-size: 16px;">SURAT JALAN</h3>
+                            <p style="margin: 4px 0 0 0; font-size: 12px; font-family: monospace; font-weight: bold;">${rec.docNo}</p>
+                        </div>
+                    </div>
+
+                    <table style="width: 100%; margin-bottom: 20px; font-size: 13px; line-height: 1.6;">
+                        <tr>
+                            <td style="width: 130px; font-weight: bold;">Tanggal Pengiriman</td>
+                            <td>: ${rec.timestamp || rec.date}</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: bold;">Tujuan / Customer</td>
+                            <td>: ${rec.destination}</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: bold;">Catatan / Keterangan</td>
+                            <td>: ${rec.notes}</td>
+                        </tr>
+                    </table>
+
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 12px;" border="1" cellpadding="8">
+                        <thead>
+                            <tr style="background-color: #f0f0f0;">
+                                <th style="width: 40px; text-align: center;">No</th>
+                                <th style="width: 140px;">Kode Barcode</th>
+                                <th>Nama Produk & Spesifikasi</th>
+                                <th style="width: 80px; text-align: center;">Jumlah</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rec.items.map((item, idx) => `
+                                <tr>
+                                    <td style="text-align: center;">${idx + 1}</td>
+                                    <td style="font-family: monospace; font-weight: bold;">${item.kode}</td>
+                                    <td>
+                                        <strong>${item.nama}</strong><br>
+                                        <span style="font-size: 10px; color: #555;">${item.spec}</span>
+                                    </td>
+                                    <td style="text-align: center; font-weight: bold;">${item.qty} pcs</td>
+                                </tr>
+                            `).join('')}
+                            <tr style="font-weight: bold; background-color: #f9f9f9;">
+                                <td colspan="3" style="text-align: right;">TOTAL ITEM OUTBOUND:</td>
+                                <td style="text-align: center;">${rec.totalQty} pcs</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div style="display: flex; justify-content: space-between; margin-top: 50px; text-align: center; font-size: 12px;">
+                        <div style="width: 200px;">
+                            <p>Petugas Gudang / Pengirim,</p>
+                            <br><br><br>
+                            <p style="border-top: 1px dashed #000; padding-top: 4px;">( .................................... )</p>
+                        </div>
+                        <div style="width: 200px;">
+                            <p>Penerima / Driver,</p>
+                            <br><br><br>
+                            <p style="border-top: 1px dashed #000; padding-top: 4px;">( .................................... )</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            window.print();
+        }
+
+        function deleteHistoryRecord(docNo) {
+            if (confirm(`Apakah Anda yakin ingin menghapus transaksi pendataan (${docNo})?`)) {
+                outboundHistory = outboundHistory.filter(r => r.docNo !== docNo);
+                localStorage.setItem('risa_standalone_outbound', JSON.stringify(outboundHistory));
+                updateDashboardStats();
+                renderHistoryTable();
+                renderCatalogRecapTable();
+            }
+        }
+
+        function clearAllHistoryData() {
+            if (confirm("⚠️ PERINGATAN: Hapus semua riwayat transaksi pendataan outbound? Data yang dihapus tidak dapat dikembalikan.")) {
+                outboundHistory = [];
+                localStorage.removeItem('risa_standalone_outbound');
+                updateDashboardStats();
+                renderHistoryTable();
+                renderCatalogRecapTable();
+            }
+        }
+
+        // Render Catalog Recap Table
+        function renderCatalogRecapTable() {
+            const tbody = document.getElementById('catalog-recap-tbody');
+            if (typeof barcodeData === 'undefined') return;
+
+            const searchVal = (document.getElementById('catalog-search').value || '').toLowerCase();
+
+            // Calculate aggregate outbound totals per product code
+            const totalsMap = {};
+            outboundHistory.forEach(rec => {
+                rec.items.forEach(item => {
+                    const codeKey = item.kode.trim().toUpperCase();
+                    totalsMap[codeKey] = (totalsMap[codeKey] || 0) + item.qty;
+                });
+            });
+
+            const filtered = barcodeData.filter(item => {
+                return item.kode.toLowerCase().includes(searchVal) ||
+                       item.nama_produk.toLowerCase().includes(searchVal) ||
+                       item.spesifikasi.toLowerCase().includes(searchVal);
+            });
+
+            tbody.innerHTML = filtered.map(item => {
+                const cleanKey = item.kode.trim().toUpperCase();
+                const totalSent = totalsMap[cleanKey] || 0;
+
+                return `
+                    <tr>
+                        <td><span class="code-badge">${item.kode}</span></td>
+                        <td style="font-weight: 600;">${item.nama_produk}</td>
+                        <td style="font-size: 12px; color: var(--text-muted);">${item.spesifikasi}</td>
+                        <td style="text-align: center; font-weight: bold; ${totalSent > 0 ? 'color: var(--success);' : 'color: var(--text-muted);'}">
+                            ${totalSent} pcs
+                        </td>
+                        <td style="text-align: center;">
+                            <div style="background-color: white; padding: 4px; border-radius: 4px; border: 1px solid #ddd; height: 35px; display: inline-flex; align-items: center; justify-content: center;">
+                                ${item.svg}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Tab Switcher
+        function switchPanelTab(tabId) {
+            document.querySelectorAll('.panel-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            if (tabId === 'new-outbound') {
+                document.querySelectorAll('.panel-tabs .tab-btn')[0].classList.add('active');
+                document.getElementById('tab-new-outbound').classList.add('active');
+                setTimeout(() => scanInput.focus(), 100);
+            } else if (tabId === 'history') {
+                document.querySelectorAll('.panel-tabs .tab-btn')[1].classList.add('active');
+                document.getElementById('tab-history').classList.add('active');
+                renderHistoryTable();
+            } else if (tabId === 'catalog-recap') {
+                document.querySelectorAll('.panel-tabs .tab-btn')[2].classList.add('active');
+                document.getElementById('tab-catalog-recap').classList.add('active');
+                renderCatalogRecapTable();
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Backup Data
+        function exportDataJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(outboundHistory, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `pendataan_outbound_backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function exportCatalogRecapCSV() {
+            if (typeof barcodeData === 'undefined') return;
+
+            const totalsMap = {};
+            outboundHistory.forEach(rec => {
+                rec.items.forEach(item => {
+                    const codeKey = item.kode.trim().toUpperCase();
+                    totalsMap[codeKey] = (totalsMap[codeKey] || 0) + item.qty;
+                });
+            });
+
+            let csvContent = "data:text/csv;charset=utf-8,Kode Barcode,Nama Produk,Spesifikasi,Total Terkirim (Pcs)\n";
+            barcodeData.forEach(item => {
+                const cleanKey = item.kode.trim().toUpperCase();
+                const totalSent = totalsMap[cleanKey] || 0;
+                csvContent += `"${item.kode}","${item.nama_produk}","${item.spesifikasi}",${totalSent}\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `recap_pendataan_barcode_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+    </script>
+</body>
+</html>

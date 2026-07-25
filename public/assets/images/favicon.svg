@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)"/>
+  <g text-anchor="middle">
+    <!-- RISA text in White -->
+    <text x="256" y="225" font-family="'Poppins', 'Inter', system-ui, -apple-system, sans-serif" font-weight="800" font-size="120" fill="#ffffff" letter-spacing="-2">RISA</text>
+    <!-- OrthoERP text in Primary Amber -->
+    <text x="256" y="345" font-family="'Poppins', 'Inter', system-ui, -apple-system, sans-serif" font-weight="800" font-size="90" fill="#f59e0b" letter-spacing="-1">OrthoERP</text>
+  </g>
+</svg>
