@@ -13,6 +13,7 @@
         "laravel/tinker": "^2.10.1",
         "maatwebsite/excel": "^3.1",
         "picqer/php-barcode-generator": "^3.2",
+        "pxlrbt/filament-excel": "^2.5",
         "symfony/yaml": "^7.0"
     },
     "require-dev": {

@@ -3,17 +3,24 @@
 namespace App\Filament\Resources\OutboundTransactionResource\Pages;
 
 use App\Domain\Product\Models\Product;
+use App\Domain\Shared\Enums\DateRangePreset;
 use App\Domain\Stock\Actions\StartOutboundSession;
+use App\Domain\Stock\Exports\RekapProdukKeluarExport;
 use App\Domain\Stock\Models\OutboundTransaction;
 use App\Filament\Concerns\HasSelectionToggle;
 use App\Filament\Pages\ScanOutbound;
 use App\Filament\Resources\OutboundTransactionResource;
+use App\Filament\Resources\ProductResource;
 use Filament\Actions;
+use Filament\Forms;
+use Filament\Forms\Get;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 use Livewire\Attributes\Url;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ListOutboundTransactions extends ListRecords
 {
@@ -23,6 +30,15 @@ class ListOutboundTransactions extends ListRecords
 
     #[Url(as: 'mode', keep: true)]
     public string $viewMode = 'transaksi';
+
+    #[Url(as: 'period', keep: true)]
+    public string $rekapPreset = 'this_month';
+
+    #[Url(as: 'from', keep: true)]
+    public ?string $rekapFrom = null;
+
+    #[Url(as: 'until', keep: true)]
+    public ?string $rekapUntil = null;
 
     public function toggleViewMode(): void
     {
@@ -34,6 +50,36 @@ class ListOutboundTransactions extends ListRecords
         if (method_exists($this, 'resetTable')) {
             $this->resetTable();
         }
+    }
+
+    public function applyRekapFilter(array $data): void
+    {
+        $this->rekapPreset = $data['preset'] ?? DateRangePreset::ThisMonth->value;
+        $this->rekapFrom = $data['from'] ?? null;
+        $this->rekapUntil = $data['until'] ?? null;
+
+        if (method_exists($this, 'resetTable')) {
+            $this->resetTable();
+        }
+    }
+
+    /**
+     * Resolve preset ke [Carbon $from, Carbon $until].
+     */
+    protected function getRekapDateRange(): array
+    {
+        $preset = DateRangePreset::tryFrom($this->rekapPreset) ?? DateRangePreset::ThisMonth;
+
+        return $preset->range($this->rekapFrom, $this->rekapUntil);
+    }
+
+    public function getRekapPeriodLabel(): string
+    {
+        $preset = DateRangePreset::tryFrom($this->rekapPreset) ?? DateRangePreset::ThisMonth;
+
+        return $preset === DateRangePreset::Custom
+            ? $preset->humanRange($this->rekapFrom, $this->rekapUntil)
+            : $preset->label();
     }
 
     /**
@@ -59,22 +105,21 @@ class ListOutboundTransactions extends ListRecords
 
     protected function buildRekapTable(Table $table): Table
     {
+        [$from, $until] = $this->getRekapDateRange();
+
+        // Sub-query closure: hanya items dari transaksi completed dalam range tanggal.
+        $itemsInRange = fn (Builder $q) => $q
+            ->whereBetween('scanned_at', [$from, $until])
+            ->whereHas('transaction', fn (Builder $qq) => $qq->where('status', OutboundTransaction::STATUS_COMPLETED));
+
         return $table
             ->query(
                 Product::query()
                     ->select('products.*')
-                    ->whereHas('outboundItems.transaction', fn (Builder $q) => $q->where('status', OutboundTransaction::STATUS_COMPLETED))
-                    ->withSum(
-                        ['outboundItems as total_qty_out' => fn (Builder $q) => $q->whereHas('transaction', fn (Builder $qq) => $qq->where('status', OutboundTransaction::STATUS_COMPLETED))],
-                        'quantity'
-                    )
-                    ->withCount(
-                        ['outboundItems as trx_count' => fn (Builder $q) => $q->whereHas('transaction', fn (Builder $qq) => $qq->where('status', OutboundTransaction::STATUS_COMPLETED))]
-                    )
-                    ->withMax(
-                        ['outboundItems as last_out_at' => fn (Builder $q) => $q->whereHas('transaction', fn (Builder $qq) => $qq->where('status', OutboundTransaction::STATUS_COMPLETED))],
-                        'scanned_at'
-                    )
+                    ->whereHas('outboundItems', $itemsInRange)
+                    ->withSum(['outboundItems as total_qty_out' => $itemsInRange], 'quantity')
+                    ->withCount(['outboundItems as trx_count' => $itemsInRange])
+                    ->withMax(['outboundItems as last_out_at' => $itemsInRange], 'scanned_at')
             )
             ->columns([
                 Tables\Columns\TextColumn::make('code')
@@ -114,6 +159,7 @@ class ListOutboundTransactions extends ListRecords
                     ->placeholder('—'),
             ])
             ->defaultSort('total_qty_out', 'desc')
+            ->recordUrl(fn (Product $record) => ProductResource::getUrl('view', ['record' => $record->id]))
             ->filters([])
             ->headerActions([])
             ->actions([])
@@ -121,8 +167,7 @@ class ListOutboundTransactions extends ListRecords
     }
 
     /**
-     * Header actions — gunakan ->visible(fn() => ...) agar setiap action
-     * di-evaluate secara lazy per render cycle, bukan di-cache saat mount pertama.
+     * Header actions — di-evaluate lazy per render supaya viewMode berubah langsung memperbarui action set.
      */
     protected function getHeaderActions(): array
     {
@@ -132,8 +177,59 @@ class ListOutboundTransactions extends ListRecords
                 ->icon(fn () => $this->viewMode === 'rekap' ? 'heroicon-o-document-text' : 'heroicon-o-chart-bar')
                 ->color('gray')
                 ->action('toggleViewMode'),
+
+            Actions\Action::make('filterPeriode')
+                ->label(fn () => 'Periode: ' . $this->getRekapPeriodLabel())
+                ->icon('heroicon-o-calendar')
+                ->color('gray')
+                ->visible(fn () => $this->viewMode === 'rekap')
+                ->fillForm(fn () => [
+                    'preset' => $this->rekapPreset,
+                    'from' => $this->rekapFrom,
+                    'until' => $this->rekapUntil,
+                ])
+                ->form([
+                    Forms\Components\Select::make('preset')
+                        ->label('Periode')
+                        ->options(DateRangePreset::options())
+                        ->default(DateRangePreset::ThisMonth->value)
+                        ->live()
+                        ->required(),
+                    Forms\Components\DatePicker::make('from')
+                        ->label('Dari tanggal')
+                        ->native(false)
+                        ->visible(fn (Get $get) => $get('preset') === DateRangePreset::Custom->value)
+                        ->required(fn (Get $get) => $get('preset') === DateRangePreset::Custom->value),
+                    Forms\Components\DatePicker::make('until')
+                        ->label('Sampai tanggal')
+                        ->native(false)
+                        ->visible(fn (Get $get) => $get('preset') === DateRangePreset::Custom->value)
+                        ->required(fn (Get $get) => $get('preset') === DateRangePreset::Custom->value)
+                        ->afterOrEqual('from'),
+                ])
+                ->action(fn (array $data) => $this->applyRekapFilter($data))
+                ->modalWidth('md')
+                ->modalHeading('Filter Periode Laporan')
+                ->modalSubmitActionLabel('Terapkan'),
+
+            Actions\Action::make('exportRekap')
+                ->label('Export Excel')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->color('success')
+                ->visible(fn () => $this->viewMode === 'rekap')
+                ->action(function () {
+                    [$from, $until] = $this->getRekapDateRange();
+                    $filename = 'rekap-produk-keluar_' . $from->format('Ymd') . '-' . $until->format('Ymd') . '_' . now()->format('His') . '.xlsx';
+
+                    return Excel::download(
+                        new RekapProdukKeluarExport($from, $until, $this->getRekapPeriodLabel()),
+                        $filename
+                    );
+                }),
+
             $this->getSelectionToggleAction()
                 ->visible(fn () => $this->viewMode === 'transaksi'),
+
             Actions\Action::make('startSession')
                 ->label('Scan Produk')
                 ->icon('heroicon-o-qr-code')
