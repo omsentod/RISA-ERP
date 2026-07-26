@@ -10,7 +10,6 @@ use App\Domain\Stock\Models\OutboundTransaction;
 use App\Filament\Concerns\HasSelectionToggle;
 use App\Filament\Pages\ScanOutbound;
 use App\Filament\Resources\OutboundTransactionResource;
-use App\Filament\Resources\ProductResource;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Forms\Get;
@@ -19,6 +18,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Url;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -80,6 +80,34 @@ class ListOutboundTransactions extends ListRecords
         return $preset === DateRangePreset::Custom
             ? $preset->humanRange($this->rekapFrom, $this->rekapUntil)
             : $preset->label();
+    }
+
+    /**
+     * Query jejak scan untuk 1 produk dalam periode filter aktif.
+     * Join ke outbound_transactions untuk ambil doc_no, doc_date, destination, creator.
+     */
+    protected function buildTrailQuery(Product $product): \Illuminate\Database\Query\Builder
+    {
+        [$from, $until] = $this->getRekapDateRange();
+
+        return DB::table('outbound_transaction_items as items')
+            ->join('outbound_transactions as tx', 'tx.id', '=', 'items.outbound_transaction_id')
+            ->leftJoin('users', 'users.id', '=', 'tx.created_by')
+            ->where('items.product_id', $product->id)
+            ->whereBetween('items.scanned_at', [$from, $until])
+            ->where('tx.status', OutboundTransaction::STATUS_COMPLETED)
+            ->whereNull('tx.deleted_at')
+            ->select([
+                'tx.id as tx_id',
+                'tx.doc_no',
+                'tx.doc_date',
+                'tx.destination',
+                'tx.completed_at',
+                'items.quantity',
+                'items.scanned_at',
+                'users.name as creator_name',
+            ])
+            ->orderByDesc('items.scanned_at');
     }
 
     /**
@@ -159,10 +187,27 @@ class ListOutboundTransactions extends ListRecords
                     ->placeholder('—'),
             ])
             ->defaultSort('total_qty_out', 'desc')
-            ->recordUrl(fn (Product $record) => ProductResource::getUrl('view', ['record' => $record->id]))
+            ->recordAction('viewTrail')
+            ->recordUrl(fn () => null)
             ->filters([])
             ->headerActions([])
-            ->actions([])
+            ->actions([
+                Tables\Actions\Action::make('viewTrail')
+                    ->label('Lihat Jejak')
+                    ->icon('heroicon-o-magnifying-glass')
+                    ->color('gray')
+                    ->modalHeading(fn (Product $record) => 'Jejak Barang Keluar — ' . $record->code)
+                    ->modalDescription(fn (Product $record) => $record->name . ' · Periode: ' . $this->getRekapPeriodLabel())
+                    ->modalContent(fn (Product $record) => view('filament.modals.outbound-trail', [
+                        'product' => $record,
+                        'items' => $this->buildTrailQuery($record)->get(),
+                        'totalQty' => (int) $this->buildTrailQuery($record)->sum('items.quantity'),
+                        'periodLabel' => $this->getRekapPeriodLabel(),
+                    ]))
+                    ->modalWidth('4xl')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Tutup'),
+            ])
             ->bulkActions([]);
     }
 
