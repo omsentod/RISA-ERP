@@ -94,8 +94,9 @@ $PHP_BIN artisan filament:cache-components || true
 # ------------------------------------------------------------------------
 $PHP_BIN artisan icons:cache || true
 
-# Kalau ada permission baru dari resource baru, refresh Shield
-# $PHP_BIN artisan shield:generate --all --panel=admin --no-interaction || true
+# Refresh Shield permissions — auto register permission untuk Resource baru
+# Idempotent, ~2 detik. Kalau tidak ada Resource baru, tidak ada efek.
+$PHP_BIN artisan shield:generate --all --panel=admin --no-interaction || true
 
 # ------------------------------------------------------------------------
 # 8. File permissions
