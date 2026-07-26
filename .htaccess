@@ -1,0 +1,77 @@
+# ============================================================================
+# RISA-ERP — Root .htaccess untuk Hostinger Shared Hosting
+# ============================================================================
+# File ini WAJIB ada di root repo (public_html/) supaya:
+#   1. Semua request di-rewrite ke public/ (Laravel entry point)
+#   2. Folder sensitif (app/, config/, .env, storage/, vendor/, dll)
+#      TIDAK bisa diakses langsung via URL
+# ============================================================================
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # ------------------------------------------------------------------------
+    # 1. BLOCK akses direct ke folder sensitif (return 403 Forbidden)
+    # ------------------------------------------------------------------------
+    RewriteRule ^\.env - [F,L]
+    RewriteRule ^\.env\..* - [F,L]
+    RewriteRule ^app/ - [F,L]
+    RewriteRule ^bootstrap/ - [F,L]
+    RewriteRule ^config/ - [F,L]
+    RewriteRule ^database/ - [F,L]
+    RewriteRule ^resources/ - [F,L]
+    RewriteRule ^routes/ - [F,L]
+    RewriteRule ^storage/ - [F,L]
+    RewriteRule ^tests/ - [F,L]
+    RewriteRule ^vendor/ - [F,L]
+    RewriteRule ^artisan$ - [F,L]
+    RewriteRule ^composer\.(json|lock)$ - [F,L]
+    RewriteRule ^package(-lock)?\.json$ - [F,L]
+    RewriteRule ^phpunit\.xml$ - [F,L]
+    RewriteRule ^\.git - [F,L]
+    RewriteRule ^\.env\.example$ - [F,L]
+    RewriteRule ^\.env\.production\.example$ - [F,L]
+    RewriteRule ^deploy\.sh$ - [F,L]
+    RewriteRule ^README\.md$ - [F,L]
+    RewriteRule ^DEPLOYMENT\.md$ - [F,L]
+    RewriteRule ^CLAUDE\.md$ - [F,L]
+
+    # ------------------------------------------------------------------------
+    # 2. REWRITE semua request lainnya ke public/
+    # ------------------------------------------------------------------------
+    # Kalau request point ke public/ langsung, skip
+    RewriteCond %{REQUEST_URI} !^/public/
+    # Kalau file/folder ada di public/ → serve dari sana
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# ============================================================================
+# Force HTTPS (aktifkan setelah SSL Let's Encrypt sudah pasang)
+# ============================================================================
+# <IfModule mod_rewrite.c>
+#     RewriteEngine On
+#     RewriteCond %{HTTPS} off
+#     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# </IfModule>
+
+# ============================================================================
+# PHP settings (override kalau hPanel tidak allow)
+# ============================================================================
+<IfModule mod_php.c>
+    php_value memory_limit 256M
+    php_value max_execution_time 120
+    php_value upload_max_filesize 20M
+    php_value post_max_size 25M
+</IfModule>
+
+# ============================================================================
+# Security headers
+# ============================================================================
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    # HSTS — aktifkan setelah HTTPS stabil
+    # Header set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
