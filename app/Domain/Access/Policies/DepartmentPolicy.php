@@ -2,8 +2,8 @@
 
 namespace App\Domain\Access\Policies;
 
-use App\Domain\Access\Models\Department;
 use App\Models\User;
+use App\Domain\Access\Models\Department;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class DepartmentPolicy
