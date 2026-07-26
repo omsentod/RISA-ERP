@@ -150,26 +150,43 @@ bash deploy.sh
 
 Kalau sukses, output akhir: `✅ Deploy selesai — <timestamp>`.
 
-### 4.4 Seed data awal
+### 4.4 Seed data awal (ONE-TIME only)
+
+**Jangan** pakai `--seed` di `deploy.sh` — akan reset password admin tiap deploy + boros re-import 1455 produk.
+
+Pakai `seed-initial.sh` yang jalan sekali:
 ```bash
-php artisan db:seed --class=RoleSeeder --force
-php artisan db:seed --class=AdminUserSeeder --force
-php artisan shield:generate --all --panel=admin --no-interaction
+bash seed-initial.sh
 ```
 
-Cek user admin:
+Script akan:
+- Generate Filament Shield permissions
+- Seed Role (super_admin, admin_registrasi, dst.)
+- Seed Department
+- Seed Admin User (email: `admin@risa.co.id`, password default: `password`)
+- Import Product dari `storage/app/reference/BARCODE.xlsx` (kalau file ada)
+
+**Kalau `BARCODE.xlsx` belum ada di server**, upload via SFTP:
+- Source: `<lokal>/storage/app/reference/BARCODE.xlsx`
+- Target: `~/domains/erp.<namadomain>.co.id/public_html/storage/app/reference/BARCODE.xlsx`
+
+Lalu:
+```bash
+php artisan db:seed --class=ProductSeeder --force
+```
+
+### 4.5 GANTI PASSWORD ADMIN (WAJIB)
+
+Default password: `password`. **Ganti segera**:
 ```bash
 php artisan tinker
->>> \App\Models\User::first();
+```
+```php
+\App\Models\User::first()->update(['password' => \Hash::make('PasswordKuatBaru123!')]);
+exit
 ```
 
-**GANTI PASSWORD ADMIN** (default: `password`):
-```bash
-php artisan tinker
->>> \App\Models\User::first()->update(['password' => \Hash::make('GantiPasswordKuat123!')]);
-```
-
-### 4.5 Cron Job
+### 4.6 Cron Job
 `hPanel → Advanced → Cron Jobs → Create`
 - Command:
   ```

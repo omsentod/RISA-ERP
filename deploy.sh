@@ -46,10 +46,26 @@ echo "▶ Composer install..."
 composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
 # ------------------------------------------------------------------------
+# 3b. Auto-generate APP_KEY kalau kosong (first deploy)
+# ------------------------------------------------------------------------
+if ! grep -qE '^APP_KEY=base64:.+' .env; then
+    echo "▶ APP_KEY kosong — generate baru..."
+    $PHP_BIN artisan key:generate --force --no-interaction
+fi
+
+# ------------------------------------------------------------------------
 # 4. Migrasi database (force karena non-interactive)
 # ------------------------------------------------------------------------
 echo "▶ Menjalankan migration..."
 $PHP_BIN artisan migrate --force --no-interaction
+
+# Cek apakah tabel roles kosong (first deploy) → warn user untuk seed
+if $PHP_BIN artisan tinker --execute="exit(\Spatie\Permission\Models\Role::count() === 0 ? 0 : 1);" 2>/dev/null; then
+    echo ""
+    echo "⚠  Role masih kosong — ini deploy pertama. Setelah script selesai, jalankan:"
+    echo "     bash seed-initial.sh"
+    echo ""
+fi
 
 # ------------------------------------------------------------------------
 # 5. Storage symlink (idempotent, aman dijalankan berkali-kali)
