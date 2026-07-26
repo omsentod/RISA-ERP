@@ -26,8 +26,10 @@ class BuildPrintSuratJalanJs
             iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;border:0;';
             document.body.appendChild(iframe);
             const doc = iframe.contentDocument || iframe.contentWindow.document;
+            const bytes = Uint8Array.from(atob('{$encoded}'), c => c.charCodeAt(0));
+            const html = new TextDecoder('utf-8').decode(bytes);
             doc.open();
-            doc.write(atob('{$encoded}'));
+            doc.write(html);
             doc.close();
             const doPrint = () => {
                 try {

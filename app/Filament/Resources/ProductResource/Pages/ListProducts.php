@@ -100,7 +100,7 @@ class ListProducts extends ListRecords
                             ->action(fn () => app(GenerateProductTemplate::class)->stream()),
                     ]),
                 Actions\Action::make('printAllFiltered')
-                    ->label('Cetak Semua (Filter Aktif)')
+                    ->label('Cetak Semua')
                     ->icon('heroicon-o-printer')
                     ->requiresConfirmation()
                     ->modalHeading('Cetak Label untuk Semua Produk yang Sedang Difilter')

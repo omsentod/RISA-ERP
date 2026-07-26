@@ -194,8 +194,7 @@ class ListOutboundTransactions extends ListRecords
             ->actions([
                 Tables\Actions\Action::make('viewTrail')
                     ->label('Lihat Jejak')
-                    ->icon('heroicon-o-magnifying-glass')
-                    ->color('gray')
+                    ->extraAttributes(['class' => 'hidden'])
                     ->modalHeading(fn (Product $record) => 'Jejak Barang Keluar — ' . $record->code)
                     ->modalDescription(fn (Product $record) => $record->name . ' · Periode: ' . $this->getRekapPeriodLabel())
                     ->modalContent(fn (Product $record) => view('filament.modals.outbound-trail', [

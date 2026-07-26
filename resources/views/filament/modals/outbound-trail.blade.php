@@ -28,7 +28,7 @@
     @else
         <div class="overflow-hidden rounded-lg border border-gray-200 dark:border-white/10">
             <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
+                <table class="w-full text-sm">
                     <thead class="bg-gray-50 dark:bg-white/5">
                         <tr class="text-left">
                             <th class="px-4 py-3 font-medium text-gray-600 dark:text-gray-300">No. Surat Jalan</th>

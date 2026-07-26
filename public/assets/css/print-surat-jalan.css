@@ -1,6 +1,6 @@
 @page {
     size: A5;
-    margin: 10mm;
+    margin: 8mm;
 }
 * {
     box-sizing: border-box;
@@ -8,130 +8,253 @@
 html, body {
     margin: 0;
     padding: 0;
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-    color: #000;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: #111827;
     background: #fff;
-    font-size: 10pt;
+    font-size: 9pt;
+    line-height: 1.35;
 }
+.container {
+    padding: 0;
+}
+
+/* ---------- HEADER ---------- */
 .header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 8mm;
-    padding-bottom: 4mm;
-    border-bottom: 2px solid #000;
+    gap: 6mm;
+    padding-bottom: 5mm;
+    border-bottom: 1.5px solid #111827;
+    margin-bottom: 6mm;
 }
-.company h1 {
-    font-size: 14pt;
-    margin: 0;
-    letter-spacing: 0.5px;
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 3mm;
 }
-.company .sub {
-    font-size: 8pt;
-    color: #444;
+.brand .logo {
+    height: 14mm;
+    width: auto;
+    object-fit: contain;
 }
-.doc-info {
+
+.company-address {
+    margin-top: 2.5mm;
+    font-size: 7.5pt;
+    color: #111827;
+    line-height: 1.4;
+}
+.company-address p { margin: 0; }
+
+.doc-header {
     text-align: right;
+    min-width: 45mm;
 }
-.doc-info .title {
-    font-size: 12pt;
-    font-weight: 700;
-    margin-bottom: 2mm;
+.doc-header .title {
+    font-size: 14pt;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #111827;
+    margin: 0;
 }
-.doc-info table {
+.doc-header .doc-no {
+    font-family: 'Courier New', Courier, monospace;
     font-size: 9pt;
+    font-weight: 700;
+    color: #1d4ed8;
+    margin: 1mm 0 2mm;
 }
-.doc-info td {
-    padding: 0.5mm 1mm;
+.doc-header .doc-meta {
+    font-size: 7.5pt;
+    color: #6b7280;
 }
-.doc-info td:first-child {
-    color: #666;
+.doc-header .doc-meta strong {
+    color: #111827;
+    font-weight: 600;
 }
-.meta {
+
+/* ---------- SHIPMENT INFO ---------- */
+.shipment {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 4mm;
-    margin-bottom: 6mm;
+    margin-bottom: 5mm;
 }
-.meta .box {
-    padding: 2mm;
-    border: 1px solid #ccc;
-    border-radius: 2mm;
-}
-.meta .label {
-    font-size: 8pt;
-    color: #666;
+.shipment .label {
+    font-size: 7pt;
+    font-weight: 700;
+    color: #9ca3af;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 1mm;
+    letter-spacing: 0.6px;
+    margin-bottom: 1.5mm;
 }
-.meta .value {
-    font-size: 10pt;
-    font-weight: 500;
+.shipment .card {
+    padding: 3mm;
+    border: 1px solid #e5e7eb;
+    border-radius: 2mm;
+    background: #f9fafb;
+}
+.shipment .card .primary {
+    font-weight: 700;
+    font-size: 9.5pt;
+    color: #111827;
+}
+.shipment .card .hint {
+    font-size: 7pt;
+    color: #6b7280;
+    margin-top: 1mm;
+    line-height: 1.4;
+}
+.shipment .card .row {
+    font-size: 8pt;
+    color: #4b5563;
+    margin-top: 0.8mm;
+}
+.shipment .card .row strong {
+    color: #111827;
+    font-weight: 600;
+}
+
+/* ---------- ITEMS TABLE ---------- */
+.items-wrap {
+    border: 1px solid #e5e7eb;
+    border-radius: 2mm;
+    overflow: hidden;
+    margin-bottom: 5mm;
 }
 table.items {
     width: 100%;
     border-collapse: collapse;
-    font-size: 9pt;
-    margin-bottom: 6mm;
+    font-size: 8.5pt;
+}
+table.items thead {
+    background: #f3f4f6;
+    border-bottom: 1px solid #e5e7eb;
 }
 table.items th {
-    background: #f3f4f6;
-    padding: 2mm;
+    padding: 2.5mm 2mm;
     text-align: left;
-    border-bottom: 2px solid #000;
-    font-weight: 600;
+    font-weight: 700;
+    color: #374151;
+    font-size: 8pt;
+}
+table.items th.no,
+table.items td.no {
+    text-align: center;
+    width: 8mm;
+    color: #6b7280;
+}
+table.items th.code,
+table.items td.code {
+    width: 26mm;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: 700;
+    color: #1e40af;
+}
+table.items th.qty,
+table.items td.qty {
+    text-align: center;
+    width: 16mm;
+    font-weight: 800;
+    color: #111827;
+}
+table.items tbody tr {
+    border-top: 1px solid #f3f4f6;
+}
+table.items tbody tr:first-child {
+    border-top: none;
 }
 table.items td {
-    padding: 2mm;
-    border-bottom: 1px solid #ddd;
+    padding: 2.2mm 2mm;
     vertical-align: top;
 }
-table.items .qty {
-    text-align: center;
-    font-weight: 600;
-}
-table.items .no {
-    text-align: center;
-    color: #666;
-    width: 8mm;
-}
-table.items .code {
-    font-family: 'Courier New', monospace;
-    font-weight: 600;
-    width: 30mm;
-}
-.total-row td {
+table.items td .spec {
     font-weight: 700;
-    font-size: 10pt;
-    background: #f9fafb;
-    border-top: 2px solid #000;
-    padding: 3mm 2mm;
+    color: #111827;
 }
+table.items td .name {
+    font-size: 7pt;
+    color: #6b7280;
+    margin-top: 0.4mm;
+}
+table.items tfoot tr {
+    background: #f9fafb;
+    border-top: 1.5px solid #111827;
+}
+table.items tfoot td {
+    padding: 2.8mm 2mm;
+    font-weight: 800;
+}
+table.items tfoot .label {
+    text-align: right;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #374151;
+    font-size: 8pt;
+}
+table.items tfoot .total-qty {
+    text-align: center;
+    color: #1e3a8a;
+    font-size: 11pt;
+    font-weight: 900;
+}
+
+/* ---------- NOTES ---------- */
+.notes {
+    margin-bottom: 5mm;
+}
+.notes .label {
+    font-size: 7pt;
+    font-weight: 700;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 1.5mm;
+}
+.notes .body {
+    padding: 3mm;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 2mm;
+    font-size: 8pt;
+    color: #374151;
+    line-height: 1.4;
+}
+
+/* ---------- SIGNATURES ---------- */
 .signatures {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 5mm;
-    margin-top: 10mm;
-}
-.signatures .box {
+    margin-top: 12mm;
     text-align: center;
+    font-size: 8pt;
 }
 .signatures .box .role {
-    font-size: 9pt;
-    margin-bottom: 12mm;
-    color: #666;
+    color: #6b7280;
+    margin-bottom: 16mm;
+}
+.signatures .box .line {
+    border-top: 1px dashed #9ca3af;
+    padding-top: 1.5mm;
 }
 .signatures .box .name {
-    border-top: 1px solid #000;
-    padding-top: 2mm;
-    font-size: 9pt;
+    font-weight: 700;
+    color: #111827;
+    font-size: 8.5pt;
 }
-.notes {
-    font-size: 8pt;
-    color: #555;
-    margin-top: 4mm;
-    padding: 2mm;
-    background: #f9fafb;
-    border-left: 3px solid #ccc;
+.signatures .box .placeholder {
+    color: #d1d5db;
+    font-weight: 700;
+    font-size: 8.5pt;
+}
+.signatures .box .sub {
+    font-size: 6.5pt;
+    color: #9ca3af;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.5mm;
 }

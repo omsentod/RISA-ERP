@@ -15,6 +15,11 @@ class ViewOutboundTransaction extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('back')
+                ->label('Kembali')
+                ->icon('heroicon-o-arrow-left')
+                ->color('gray')
+                ->url(OutboundTransactionResource::getUrl('index')),
             Actions\Action::make('continueScan')
                 ->label('Lanjut Scan')
                 ->icon('heroicon-o-qr-code')
