@@ -2,12 +2,15 @@
     size: 100mm 60mm;
     margin: 0;
 }
+
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
-html, body {
+
+html,
+body {
     width: 100mm;
     font-family: Arial, Helvetica, sans-serif;
     color: #000;
@@ -30,6 +33,7 @@ html, body {
     break-inside: avoid;
     overflow: hidden;
 }
+
 .sheet:last-child {
     page-break-after: auto;
     break-after: auto;
@@ -40,7 +44,8 @@ html, body {
     height: 100%;
     padding: 3mm 4mm;
     display: flex;
-    flex-direction: row-reverse; /* Align groups from right to left */
+    flex-direction: row-reverse;
+    /* Align groups from right to left */
     justify-content: space-between;
     align-items: stretch;
     background: #fff;
@@ -56,50 +61,58 @@ html, body {
 /* --- GROUP 1: Title & Logo (Rightmost) --- */
 .group-1 {
     display: flex;
-    flex-direction: column; /* Stack vertically: Logo on Top (Portrait Right), Title on Bottom (Portrait Left) */
+    flex-direction: column;
+    /* Stack vertically: Logo on Top (Portrait Right), Title on Bottom (Portrait Left) */
     justify-content: flex-start;
     align-items: center;
     height: 100%;
     width: 18mm;
     gap: 2mm;
 }
+
 .product-title {
     font-size: 10.5pt;
     font-weight: bold;
     line-height: 1.15;
-    text-align: left; /* Starts text from top */
+    text-align: left;
+    /* Starts text from top */
     width: 18mm;
     max-height: 34mm;
     overflow: hidden;
 }
+
 .logo-block {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 18mm;
-    height: 18mm;
+    width: 25mm;
+    height: 25mm;
 }
+
 .logo-block img {
     transform: rotate(90deg);
     transform-origin: center center;
-    width: 18mm; /* Rotated height - matches container */
-    height: 10mm; /* Rotated width - thicker line */
+    width: 20mm;
+    height: 20mm;
     object-fit: contain;
 }
 
 /* --- GROUP 2: Caution --- */
 .group-2 {
     display: flex;
-    align-items: flex-start; /* top-aligned */
+    align-items: flex-start;
+    /* top-aligned */
     justify-content: center;
     width: 6mm;
     height: 100%;
     padding-top: 1mm;
-    margin-left: 4mm; /* Jarak tambahan ke Group 3 */
+    margin-left: 4mm;
+    /* Jarak tambahan ke Group 3 */
 }
+
 .caution-text {
     font-size: 9.5pt;
-    font-weight:normal;
+    font-weight: normal;
     text-align: left;
     letter-spacing: -0.1px;
     padding: 1mm;
@@ -109,7 +122,8 @@ html, body {
 .group-3 {
     display: flex;
     flex-direction: row-reverse;
-    align-items: flex-start; /* top-aligned */
+    align-items: flex-start;
+    /* top-aligned */
     gap: 2mm;
     height: 100%;
     font-size: 8.5pt;
@@ -117,7 +131,10 @@ html, body {
     padding-top: 1mm;
 
 }
-.nie-text, .ref-text, .qty-text {
+
+.nie-text,
+.ref-text,
+.qty-text {
     white-space: nowrap;
 }
 
@@ -125,15 +142,18 @@ html, body {
 .group-4 {
     display: flex;
     flex-direction: row-reverse;
-    align-items: center; /* centered vertically */
+    align-items: center;
+    /* centered vertically */
     height: 100%;
     width: 22mm;
 }
+
 .barcode-wrapper {
     width: 11mm;
     height: 35mm;
     position: relative;
 }
+
 .barcode-svg-container {
     position: absolute;
     width: 35mm;
@@ -143,11 +163,13 @@ html, body {
     left: 11mm;
     top: 0;
 }
+
 .barcode-svg-container svg {
     width: 100%;
     height: 100%;
     display: block;
 }
+
 .barcode-num {
     font-size: 8pt;
     font-weight: bold;
@@ -160,12 +182,14 @@ html, body {
 /* --- GROUP 5: ISO Badges & Produksi (Leftmost) --- */
 .group-5 {
     display: flex;
-    flex-direction: column; /* Stack vertically: ISO on Top (Portrait Right), Produksi on Bottom (Portrait Left) */
+    flex-direction: column;
+    /* Stack vertically: ISO on Top (Portrait Right), Produksi on Bottom (Portrait Left) */
     justify-content: space-between;
     align-items: center;
     height: 100%;
     width: 22mm;
 }
+
 .iso-badges-col {
     display: flex;
     flex-direction: column;
@@ -173,10 +197,12 @@ html, body {
     align-items: center;
     width: 50%;
 }
+
 .iso-badge {
     border: 1px solid #000;
     border-radius: 4px;
-    font-size: 3.8pt; /* Reduced size to create visual gap */
+    font-size: 3.8pt;
+    /* Reduced size to create visual gap */
     font-weight: bold;
     padding: 1.5px 1px;
     text-align: center;
@@ -184,10 +210,13 @@ html, body {
     white-space: nowrap;
     width: 50%;
 }
+
 .produksi-block {
-    font-size: 6.5pt; /* Reduced size to create visual gap */
+    font-size: 6.5pt;
+    /* Reduced size to create visual gap */
     font-weight: bold;
     line-height: 1.2;
-    text-align: left; /* top-aligned in vertical-rl */
+    text-align: left;
+    /* top-aligned in vertical-rl */
     width: 18mm;
 }
