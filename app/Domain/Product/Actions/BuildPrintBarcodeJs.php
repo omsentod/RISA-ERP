@@ -38,10 +38,10 @@ class BuildPrintBarcodeJs
             return "alert('Tidak ada produk untuk dicetak');";
         }
 
-        $logoPath = public_path('assets/images/osfix.jpeg');
+        $logoPath = public_path('assets/images/osfix.png');
         $logoBase64 = '';
         if (file_exists($logoPath)) {
-            $logoBase64 = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($logoPath));
+            $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
         }
 
         $html = view('partials.print-barcode-labels', ['labels' => $labels, 'logo' => $logoBase64])->render();
