@@ -16,7 +16,7 @@
                 <div class="group-1">
                     @if (!empty($logo))
                         <div class="logo-block">
-                            <img src="{{ $logo }}" alt="Osfix Logo">
+                            <!-- <img src="{{ $logo }}" alt="Osfix Logo"> -->
                         </div>
                     @endif
                     <div class="v-text product-title">{{ $label['name'] }}</div>
