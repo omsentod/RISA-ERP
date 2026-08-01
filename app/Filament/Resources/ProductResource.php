@@ -74,6 +74,24 @@ class ProductResource extends Resource
                                 Forms\Components\DatePicker::make('issued_at')->label('Terbit'),
                                 Forms\Components\DatePicker::make('expired_at')->label('Expired'),
                             ]),
+                        Forms\Components\TextInput::make('product_group_code')
+                            ->label('Kode Golongan Produk')
+                            ->placeholder('Contoh: 01, 03')
+                            ->maxLength(20)
+                            ->helperText('Kode golongan dari Excel (misal: 01, 03)'),
+                        Forms\Components\TextInput::make('default_quantity')
+                            ->label('Quantity Default (QTY)')
+                            ->numeric()
+                            ->default(1)
+                            ->minValue(1)
+                            ->required()
+                            ->helperText('Jumlah quantity default untuk cetak label.'),
+                        Forms\Components\TextInput::make('default_lot')
+                            ->label('Nomor LOT Default')
+                            ->placeholder('Contoh: 012606110')
+                            ->default('012606110')
+                            ->maxLength(50)
+                            ->helperText('Nomor LOT ini akan menjadi default saat cetak label.'),
                         Forms\Components\Textarea::make('description')
                             ->label('Deskripsi')
                             ->rows(3)
@@ -108,6 +126,13 @@ class ProductResource extends Resource
                     ->sortable()
                     ->wrap()
                     ->limit(60),
+                Tables\Columns\TextColumn::make('product_group_code')
+                    ->label('Kode Golongan')
+                    ->searchable()
+                    ->sortable()
+                    ->badge()
+                    ->color('warning')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('specification')
                     ->label('Spesifikasi')
                     ->searchable()
@@ -126,6 +151,10 @@ class ProductResource extends Resource
                     ->searchable()
                     ->badge()
                     ->color('success'),
+                Tables\Columns\TextColumn::make('default_quantity')
+                    ->label('QTY')
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\IconColumn::make('is_published')
                     ->label('Website')
                     ->boolean()
@@ -154,8 +183,26 @@ class ProductResource extends Resource
                     ->label('Cetak Label')
                     ->icon('heroicon-o-printer')
                     ->color('gray')
-                    ->action(function (Product $record, $livewire) {
-                        $livewire->js(app(BuildPrintBarcodeJs::class)->handle([$record->id]));
+                    ->form([
+                        Forms\Components\TextInput::make('lot')
+                            ->label('Nomor LOT')
+                            ->default(fn (Product $record) => $record->default_lot ?? '012606110')
+                            ->required()
+                            ->helperText('Nomor LOT ini akan disimpan sebagai default produk ini untuk cetak berikutnya.'),
+                        Forms\Components\TextInput::make('quantity')
+                            ->label('Jumlah Quantity (QTY)')
+                            ->numeric()
+                            ->default(fn (Product $record) => $record->default_quantity ?? 1)
+                            ->minValue(1)
+                            ->required()
+                            ->helperText('Quantity yang akan dicetak pada label.'),
+                    ])
+                    ->action(function (Product $record, array $data, $livewire) {
+                        $record->update([
+                            'default_lot' => $data['lot'],
+                            'default_quantity' => (int) $data['quantity'],
+                        ]);
+                        $livewire->js(app(BuildPrintBarcodeJs::class)->handle([$record->id], $data['lot'], (int) $data['quantity']));
                     }),
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
@@ -165,8 +212,32 @@ class ProductResource extends Resource
                     ->label('Cetak Label Terpilih')
                     ->icon('heroicon-o-printer')
                     ->color('primary')
-                    ->action(function (Collection $records, $livewire) {
-                        $livewire->js(app(BuildPrintBarcodeJs::class)->handle($records->pluck('id')->all()));
+                    ->form([
+                        Forms\Components\TextInput::make('lot')
+                            ->label('Nomor LOT')
+                            ->default(function (Collection $records) {
+                                $first = $records->first();
+                                return $first?->default_lot ?? '012606110';
+                            })
+                            ->required()
+                            ->helperText('Nomor LOT ini akan disimpan sebagai default untuk semua produk terpilih.'),
+                        Forms\Components\TextInput::make('quantity')
+                            ->label('Jumlah Quantity (QTY)')
+                            ->numeric()
+                            ->default(function (Collection $records) {
+                                $first = $records->first();
+                                return $first?->default_quantity ?? 1;
+                            })
+                            ->minValue(1)
+                            ->required()
+                            ->helperText('Quantity yang akan dicetak pada label terpilih.'),
+                    ])
+                    ->action(function (Collection $records, array $data, $livewire) {
+                        $records->each(fn ($record) => $record->update([
+                            'default_lot' => $data['lot'],
+                            'default_quantity' => (int) $data['quantity'],
+                        ]));
+                        $livewire->js(app(BuildPrintBarcodeJs::class)->handle($records->pluck('id')->all(), $data['lot'], (int) $data['quantity']));
                     })
                     ->deselectRecordsAfterCompletion(),
                 Tables\Actions\BulkActionGroup::make([

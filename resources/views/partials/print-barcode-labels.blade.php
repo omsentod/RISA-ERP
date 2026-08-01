@@ -12,13 +12,9 @@
         <div class="sheet">
             <div class="label">
                 
-                <!-- GROUP 1: Title & Logo (Logo on Right, Title on Left in portrait) -->
+                <!-- GROUP 1: Product Title (Reserved space at top for pre-printed OSFIX logo on paper) -->
                 <div class="group-1">
-                    @if (!empty($logo))
-                        <div class="logo-block">
-                            <!-- <img src="{{ $logo }}" alt="Osfix Logo"> -->
-                        </div>
-                    @endif
+                    <div class="logo-spacer"></div>
                     <div class="v-text product-title">{{ $label['name'] }}</div>
                 </div>
                 
@@ -27,13 +23,14 @@
                     <div class="v-text caution-text">Caution : Only Use by<br>Orthopaedic Surgeon</div>
                 </div>
                 
-                <!-- GROUP 3: NIE, REF, QTY -->
+                <!-- GROUP 3: NIE, REF, LOT, QTY -->
                 <div class="group-3">
                     @if (!empty($label['nie_number']) && $label['nie_number'] !== '-')
                         <div class="v-text nie-text">NIE {{ $label['nie_number'] }}</div>
                     @endif
                     <div class="v-text ref-text">REF {{ $label['code'] }}</div>
-                    <div class="v-text qty-text">QTY 1</div>
+                    <div class="v-text lot-text">LOT {{ $label['lot'] ?? '012606110' }}</div>
+                    <div class="v-text qty-text">QTY {{ $label['quantity'] ?? 1 }}</div>
                 </div>
 
                 <!-- GROUP 4: Barcode & Code -->
@@ -46,16 +43,22 @@
                     <div class="v-text barcode-num">{{ $label['code'] }}</div>
                 </div>
 
-                <!-- GROUP 5: Produksi & ISO badges (ISO on Right, Produksi on Left in portrait) -->
-                <div class="group-5">
-                    <!-- Top (Portrait Right): ISO Badges -->
-                    <div class="iso-badges-col">
-                        <div class="v-text iso-badge">ISO 9001</div>
-                        <div class="v-text iso-badge">ISO 13485</div>
-                        <div class="v-text iso-badge">ISO 45001</div>
+                <!-- GROUP 4B: Material Info & Current Year Month -->
+                <div class="group-mat">
+                    <div class="v-text mat-text">
+                        Mat 316L<br>
+                        {{ $label['year_month'] ?? now()->format('Y m') }}
                     </div>
+                </div>
+
+                <!-- GROUP 5: Medical Symbols, ISO Badges & Produksi Info (Leftmost) -->
+                <div class="group-5">
+                    @if (!empty($symbols))
+                        <div class="symbols-block">
+                            <img src="{{ $symbols }}" alt="Medical Symbols & ISO Badges">
+                        </div>
+                    @endif
                     
-                    <!-- Bottom (Portrait Left): Produksi Info -->
                     <div class="v-text produksi-block">
                         Produksi<br>
                         PT RISA Implantama<br>

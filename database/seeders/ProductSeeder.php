@@ -81,6 +81,11 @@ class ProductSeeder extends Seeder
             $code = $this->cleanValue($row['kode'] ?? null);
             $name = $this->cleanValue($row['nama_produk'] ?? null);
             $nie = $this->cleanValue($row['nie'] ?? null);
+            $qty = isset($row['qty']) ? (int) $row['qty'] : 1;
+            $gol = $this->cleanValue($row['kode_gol_prod'] ?? $row['kode_golongan'] ?? null);
+            if ($gol !== null && strlen($gol) === 1) {
+                $gol = '0' . $gol;
+            }
 
             if (empty($code) || empty($name)) {
                 $bar->advance();
@@ -108,6 +113,8 @@ class ProductSeeder extends Seeder
                     'registration_id' => $registrationId,
                     'name' => $name,
                     'specification' => $spec,
+                    'default_quantity' => $qty > 0 ? $qty : 1,
+                    'product_group_code' => $gol,
                 ]
             );
 

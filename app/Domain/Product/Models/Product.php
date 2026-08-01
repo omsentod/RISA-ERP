@@ -22,6 +22,9 @@ class Product extends Model
         'code',
         'name',
         'specification',
+        'default_lot',
+        'default_quantity',
+        'product_group_code',
         'description',
         'is_published',
         'published_at',
@@ -31,6 +34,7 @@ class Product extends Model
     protected function casts(): array
     {
         return [
+            'default_quantity' => 'integer',
             'is_published' => 'boolean',
             'published_at' => 'datetime',
         ];

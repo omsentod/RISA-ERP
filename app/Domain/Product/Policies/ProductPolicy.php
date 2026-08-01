@@ -2,8 +2,8 @@
 
 namespace App\Domain\Product\Policies;
 
-use App\Domain\Product\Models\Product;
 use App\Models\User;
+use App\Domain\Product\Models\Product;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class ProductPolicy

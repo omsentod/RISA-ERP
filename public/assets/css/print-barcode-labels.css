@@ -12,6 +12,7 @@
 html,
 body {
     width: 90mm;
+    height: 50mm;
     font-family: Arial, Helvetica, sans-serif;
     color: #000;
     background: #fff;
@@ -19,10 +20,7 @@ body {
     print-color-adjust: exact;
 }
 
-/* 
-  CSS Page Breaks are often ignored on flex containers by browser engines.
-  Wrapping each flex label inside a simple block sheet solves this issue.
-*/
+/* Base sheet wrapper for page-break handling */
 .sheet {
     display: block;
     width: 90mm;
@@ -32,6 +30,7 @@ body {
     page-break-inside: avoid;
     break-inside: avoid;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 .sheet:last-child {
@@ -42,32 +41,41 @@ body {
 .label {
     width: 100%;
     height: 100%;
-    padding: 2.5mm 3.5mm;
+    padding: 2.5mm 3mm;
     display: flex;
     flex-direction: row-reverse;
-    /* Align groups from right to left */
     justify-content: space-between;
     align-items: stretch;
     background: #fff;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 /* Utility for vertical text flowing top to bottom */
 .v-text {
     writing-mode: vertical-rl;
     text-orientation: mixed;
+    white-space: normal;
+    word-break: break-word;
 }
 
-/* --- GROUP 1: Title & Logo (Rightmost) --- */
+/* --- GROUP 1: Product Title & Logo Spacer (Rightmost) --- */
 .group-1 {
     display: flex;
     flex-direction: column;
-    /* Stack vertically: Logo on Top (Portrait Right), Title on Bottom (Portrait Left) */
     justify-content: flex-start;
     align-items: center;
     height: 100%;
     width: 16mm;
     gap: 1.5mm;
+    flex-shrink: 0;
+}
+
+/* Empty space reserved for physical pre-printed OSFIX logo on paper */
+.logo-spacer {
+    width: 16mm;
+    height: 17mm;
+    flex-shrink: 0;
 }
 
 .product-title {
@@ -75,45 +83,30 @@ body {
     font-weight: bold;
     line-height: 1.15;
     text-align: left;
-    /* Starts text from top */
     width: 16mm;
-    max-height: 24mm;
+    max-height: 28mm;
     overflow: hidden;
-}
-
-.logo-block {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 18mm;
-    height: 18mm;
-}
-
-.logo-block img {
-    transform: rotate(90deg);
-    transform-origin: center center;
-    width: 16mm;
-    height: 16mm;
-    object-fit: contain;
+    white-space: normal;
+    word-break: break-word;
 }
 
 /* --- GROUP 2: Caution --- */
 .group-2 {
     display: flex;
     align-items: flex-start;
-    /* top-aligned */
     justify-content: center;
     width: 5.5mm;
     height: 100%;
     padding-top: 1mm;
     margin-left: 2mm;
-    /* Jarak tambahan ke Group 3 */
+    flex-shrink: 0;
 }
 
 .caution-text {
     font-size: 8.5pt;
     font-weight: normal;
     text-align: left;
+    line-height: 1.15;
     letter-spacing: -0.1px;
     padding: 0.5mm;
 }
@@ -123,18 +116,20 @@ body {
     display: flex;
     flex-direction: row-reverse;
     align-items: flex-start;
-    /* top-aligned */
     gap: 1.5mm;
     height: 100%;
     font-size: 8pt;
     font-weight: normal;
     padding-top: 1mm;
+    flex-shrink: 0;
 }
 
 .nie-text,
 .ref-text,
+.lot-text,
 .qty-text {
     white-space: nowrap;
+    line-height: 1;
 }
 
 /* --- GROUP 4: Barcode SVG & Code --- */
@@ -142,15 +137,16 @@ body {
     display: flex;
     flex-direction: row-reverse;
     align-items: center;
-    /* centered vertically */
     height: 100%;
     width: 19mm;
+    flex-shrink: 0;
 }
 
 .barcode-wrapper {
     width: 10mm;
     height: 28mm;
     position: relative;
+    flex-shrink: 0;
 }
 
 .barcode-svg-container {
@@ -178,43 +174,104 @@ body {
     margin-right: 1mm;
 }
 
-/* --- GROUP 5: ISO Badges & Produksi (Leftmost) --- */
-.group-5 {
+/* --- GROUP 4B: Material Info (Mat 316L & Current Year Month) --- */
+.group-mat {
     display: flex;
-    flex-direction: column;
-    /* Stack vertically: ISO on Top, Produksi on Bottom */
-    justify-content: center;
-    align-items: center;
-    gap: 3mm;
+    align-items: flex-end;
+    justify-content: flex-start;
+    width: 9mm;
     height: 100%;
-    width: 19mm;
+    padding-bottom: 1mm;
+    flex-shrink: 0;
 }
 
-.iso-badges-col {
-    display: flex;
-    flex-direction: column;
-    gap: 1mm;
-    align-items: center;
-    width: 100%;
-}
-
-.iso-badge {
-    border: 1px solid #000;
-    border-radius: 3px;
-    font-size: 4pt;
-    font-weight: bold;
-    padding: 1.5px 2px;
-    text-align: center;
-    line-height: 1;
-    white-space: nowrap;
-    width: auto;
-}
-
-.produksi-block {
-    font-size: 6pt;
-    font-weight: bold;
+.mat-text {
+    font-size: 7.5pt;
+    font-weight: normal;
     line-height: 1.2;
     text-align: left;
     white-space: nowrap;
+}
+
+/* --- GROUP 5: Extracted BTW Medical Symbols & ISO Badges Image + Produksi (Leftmost) --- */
+.group-5 {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    height: 100%;
+    width: 19mm;
+    flex-shrink: 0;
+}
+
+.symbols-block {
+    width: 18mm;
+    height: 22mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.symbols-block img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.produksi-block {
+    font-size: 5.5pt;
+    font-weight: bold;
+    line-height: 1.15;
+    text-align: left;
+    white-space: nowrap;
     width: 16mm;
+    height: 22mm;
+}
+
+/* Thermal Printer (@media print) Optimizations for Argox / Thermal Roll Printers */
+@media print {
+    @page {
+        size: 90mm 50mm;
+        margin: 0 !important;
+    }
+
+    html, body {
+        width: 90mm !important;
+        height: 50mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .sheet {
+        display: block !important;
+        width: 90mm !important;
+        height: 50mm !important;
+        max-width: 90mm !important;
+        max-height: 50mm !important;
+        page-break-before: auto !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    .label {
+        width: 90mm !important;
+        height: 50mm !important;
+        display: flex !important;
+        flex-direction: row-reverse !important;
+        justify-content: space-between !important;
+        align-items: stretch !important;
+        box-sizing: border-box !important;
+    }
+
+    .group-1, .group-2, .group-3, .group-4, .group-mat, .group-5 {
+        flex-shrink: 0 !important;
+    }
 }

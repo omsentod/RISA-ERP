@@ -2,8 +2,8 @@
 
 namespace App\Domain\Stock\Policies;
 
-use App\Domain\Stock\Models\OutboundTransaction;
 use App\Models\User;
+use App\Domain\Stock\Models\OutboundTransaction;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class OutboundTransactionPolicy
