@@ -15,7 +15,7 @@
                 <!-- GROUP 1: Product Title (Reserved space at top for pre-printed OSFIX logo on paper) -->
                 <div class="group-1">
                     <div class="logo-spacer"></div>
-                    <div class="v-text product-title">{{ $label['name'] }}</div>
+                    <div class="v-text product-title">{!! $label['name'] !!}</div>
                 </div>
                 
                 <!-- GROUP 2: Caution Note -->

@@ -7,7 +7,10 @@ use Illuminate\Support\Collection;
 
 class BuildPrintBarcodeJs
 {
-    public function __construct(private GenerateBarcode $barcode) {}
+    public function __construct(
+        private GenerateBarcode $barcode,
+        private FormatProductNameForPrint $formatName,
+    ) {}
 
     /**
      * Build JS that opens a hidden iframe and triggers print for the given product IDs.
@@ -70,10 +73,12 @@ class BuildPrintBarcodeJs
                 ? $config['quantity'] 
                 : (($customQuantity !== null && $customQuantity > 0) ? $customQuantity : 1);
 
+            $formattedName = $this->formatName->handle($p->name);
+
             for ($i = 0; $i < $itemQty; $i++) {
                 $labels[] = [
                     'code' => $p->code,
-                    'name' => $p->name,
+                    'name' => $formattedName,
                     'specification' => $p->specification ?? '',
                     'nie_number' => $p->registration?->nie_number ?? '21302420095',
                     'lot' => $itemLot,
