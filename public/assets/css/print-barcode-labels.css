@@ -90,6 +90,16 @@ body {
     word-break: break-word;
 }
 
+.product-title.product-title-sm {
+    font-size: 8pt;
+    line-height: 1.1;
+}
+
+.product-title.product-title-xs {
+    font-size: 7.2pt;
+    line-height: 1.05;
+}
+
 /* --- GROUP 2: Caution --- */
 .group-2 {
     display: flex;
