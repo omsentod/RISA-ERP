@@ -37,6 +37,11 @@ class ProductImportParser
                 $name = $this->clean($row['nama_produk'] ?? null);
                 $spec = $this->clean($row['spesifikasi'] ?? null);
                 $nie = $this->clean($row['nie'] ?? null);
+                $qty = isset($row['qty']) ? (int) $row['qty'] : 1;
+                $gol = $this->clean($row['kode_gol_prod'] ?? $row['kode_golongan'] ?? null);
+                if ($gol !== null && strlen($gol) === 1) {
+                    $gol = '0' . $gol;
+                }
 
                 if ($code === null && $name === null && $spec === null && $nie === null) {
                     continue;
@@ -51,6 +56,8 @@ class ProductImportParser
                         name: $name,
                         specification: $spec,
                         nieNumber: $nie,
+                        defaultQuantity: $qty > 0 ? $qty : 1,
+                        productGroupCode: $gol,
                         status: ProductImportRow::STATUS_INVALID,
                         errorReason: $code === null ? 'Kolom Kode kosong' : 'Kolom Nama Produk kosong',
                     );
@@ -69,6 +76,8 @@ class ProductImportParser
                         name: $name,
                         specification: $spec,
                         nieNumber: $nie,
+                        defaultQuantity: $qty > 0 ? $qty : 1,
+                        productGroupCode: $gol,
                         status: ProductImportRow::STATUS_DUPLICATE,
                         existingData: $existing,
                     );
@@ -84,6 +93,8 @@ class ProductImportParser
                     name: $name,
                     specification: $spec,
                     nieNumber: $nie,
+                    defaultQuantity: $qty > 0 ? $qty : 1,
+                    productGroupCode: $gol,
                     status: ProductImportRow::STATUS_NEW,
                 );
             }
@@ -96,7 +107,7 @@ class ProductImportParser
     {
         return Product::query()
             ->with(['category:id,name', 'registration:id,nie_number'])
-            ->get(['id', 'code', 'name', 'specification', 'product_category_id', 'registration_id'])
+            ->get(['id', 'code', 'name', 'specification', 'default_quantity', 'product_group_code', 'product_category_id', 'registration_id'])
             ->keyBy('code')
             ->map(fn (Product $p) => [
                 'code' => $p->code,
@@ -104,6 +115,8 @@ class ProductImportParser
                 'specification' => $p->specification,
                 'category_name' => $p->category?->name,
                 'nie_number' => $p->registration?->nie_number,
+                'default_quantity' => $p->default_quantity,
+                'product_group_code' => $p->product_group_code,
             ])
             ->toArray();
     }

@@ -109,6 +109,8 @@
                                         'Spesifikasi' => [$row['existing_data']['specification'] ?? '—', $row['specification'] ?? '—'],
                                         'Kategori' => [$row['existing_data']['category_name'] ?? '—', $row['category_name']],
                                         'NIE' => [$row['existing_data']['nie_number'] ?? '—', $row['nie_number'] ?? '—'],
+                                        'QTY' => [$row['existing_data']['default_quantity'] ?? '—', $row['default_quantity'] ?? 1],
+                                        'Kode Golongan' => [$row['existing_data']['product_group_code'] ?? '—', $row['product_group_code'] ?? '—'],
                                     ];
                                 @endphp
                                 @foreach ($comparisons as $field => [$oldVal, $newVal])

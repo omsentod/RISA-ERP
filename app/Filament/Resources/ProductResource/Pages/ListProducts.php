@@ -40,7 +40,7 @@ class ListProducts extends ListRecords
                             ->directory('imports')
                             ->required()
                             ->maxSize(10240)
-                            ->helperText('File Excel (.xlsx) dengan kolom Spesifikasi | Kode | Nama Produk | NIE per sheet kategori.'),
+                            ->helperText('File Excel (.xlsx) dengan kolom Spesifikasi | Kode | Nama Produk | NIE | QTY | Kode Golongan per sheet kategori.'),
                         Forms\Components\Radio::make('duplicate_strategy')
                             ->label('Penanganan Data Duplikat')
                             ->options([

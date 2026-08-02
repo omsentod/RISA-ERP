@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class GenerateProductTemplate
 {
-    private const HEADERS = ['Spesifikasi', 'Kode', 'Nama Produk', 'NIE'];
+    private const HEADERS = ['Spesifikasi', 'Kode', 'Nama Produk', 'NIE', 'QTY', 'Kode Golongan'];
 
     public function stream(string $filename = 'template-produk.xlsx'): StreamedResponse
     {
@@ -32,15 +32,15 @@ class GenerateProductTemplate
                 $cell = $sheet->getCellByColumnAndRow($col + 1, 1);
                 $cell->setValue($header);
             }
-            $sheet->getStyle('A1:D1')->applyFromArray([
+            $sheet->getStyle('A1:F1')->applyFromArray([
                 'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
                 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F59E0B']],
                 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
             ]);
 
             $sampleRows = [
-                ['Contoh Spesifikasi 1', 'SKU-001', 'Nama Produk Contoh 1', 'AKD 21302420095'],
-                ['Contoh Spesifikasi 2', 'SKU-002', 'Nama Produk Contoh 2', 'AKD 21302420095'],
+                ['Contoh Spesifikasi 1', 'SKU-001', 'Nama Produk Contoh 1', 'AKD 21302420095', 1, '01'],
+                ['Contoh Spesifikasi 2', 'SKU-002', 'Nama Produk Contoh 2', 'AKD 21302420095', 1, '03'],
             ];
 
             foreach ($sampleRows as $rowIndex => $row) {
@@ -49,7 +49,7 @@ class GenerateProductTemplate
                 }
             }
 
-            foreach (range('A', 'D') as $col) {
+            foreach (range('A', 'F') as $col) {
                 $sheet->getColumnDimension($col)->setAutoSize(true);
             }
         }

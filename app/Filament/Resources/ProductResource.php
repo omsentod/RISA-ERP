@@ -179,7 +179,7 @@ class ProductResource extends Resource
                     ->color('gray')
                     ->form([
                         Forms\Components\TextInput::make('sequence')
-                            ->label('Kode Urutan Hari (3 Digit)')
+                            ->label('Kode LOT Hari Ini')
                             ->default(fn () => app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->getTodaySequenceString())
                             ->maxLength(3)
                             ->numeric()
@@ -224,7 +224,7 @@ class ProductResource extends Resource
                     })
                     ->form([
                         Forms\Components\TextInput::make('sequence')
-                            ->label('Kode Urutan Hari (3 Digit)')
+                            ->label('Kode LOT Hari Ini')
                             ->default(fn () => app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->getTodaySequenceString())
                             ->maxLength(3)
                             ->numeric()

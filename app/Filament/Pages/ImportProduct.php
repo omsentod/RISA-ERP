@@ -63,7 +63,7 @@ class ImportProduct extends Page implements HasForms
                     ->directory('imports')
                     ->required()
                     ->maxSize(10240)
-                    ->helperText('Format sesuai template: 2 sheet (NON LOCKING, LOCKING) dengan kolom Spesifikasi | Kode | Nama Produk | NIE'),
+                    ->helperText('Format sesuai template: 2 sheet (NON LOCKING, LOCKING) dengan kolom Spesifikasi | Kode | Nama Produk | NIE | QTY | Kode Golongan'),
             ])
             ->statePath('data');
     }
