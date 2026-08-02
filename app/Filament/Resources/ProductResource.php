@@ -86,12 +86,6 @@ class ProductResource extends Resource
                             ->minValue(1)
                             ->required()
                             ->helperText('Jumlah quantity default untuk cetak label.'),
-                        Forms\Components\TextInput::make('default_lot')
-                            ->label('Nomor LOT Default')
-                            ->placeholder('Contoh: 012606110')
-                            ->default('012606110')
-                            ->maxLength(50)
-                            ->helperText('Nomor LOT ini akan menjadi default saat cetak label.'),
                         Forms\Components\Textarea::make('description')
                             ->label('Deskripsi')
                             ->rows(3)
@@ -184,25 +178,26 @@ class ProductResource extends Resource
                     ->icon('heroicon-o-printer')
                     ->color('gray')
                     ->form([
-                        Forms\Components\TextInput::make('lot')
-                            ->label('Nomor LOT')
-                            ->default(fn (Product $record) => $record->default_lot ?? '012606110')
-                            ->required()
-                            ->helperText('Nomor LOT ini akan disimpan sebagai default produk ini untuk cetak berikutnya.'),
-                        Forms\Components\TextInput::make('quantity')
-                            ->label('Jumlah Quantity (QTY)')
+                        Forms\Components\TextInput::make('sequence')
+                            ->label('Kode Urutan Hari (3 Digit)')
+                            ->default(fn () => app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->getTodaySequenceString())
+                            ->maxLength(3)
                             ->numeric()
-                            ->default(fn (Product $record) => $record->default_quantity ?? 1)
+                            ->required()
+                            ->helperText(function (Product $record) {
+                                $fullLot = app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->handle($record);
+                                return "Nomor LOT otomatis yang akan tercetak: {$fullLot} (Golongan + YY + MM + Urutan).";
+                            }),
+                        Forms\Components\TextInput::make('quantity')
+                            ->label('Jumlah Duplikat Lembar Label')
+                            ->numeric()
+                            ->default(1)
                             ->minValue(1)
                             ->required()
-                            ->helperText('Quantity yang akan dicetak pada label.'),
+                            ->helperText('Berapa kali stiker label ini akan diprint (jumlah lembar).'),
                     ])
                     ->action(function (Product $record, array $data, $livewire) {
-                        $record->update([
-                            'default_lot' => $data['lot'],
-                            'default_quantity' => (int) $data['quantity'],
-                        ]);
-                        $livewire->js(app(BuildPrintBarcodeJs::class)->handle([$record->id], $data['lot'], (int) $data['quantity']));
+                        $livewire->js(app(BuildPrintBarcodeJs::class)->handle([$record->id], $data['sequence'], (int) $data['quantity']));
                     }),
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
@@ -212,32 +207,57 @@ class ProductResource extends Resource
                     ->label('Cetak Label Terpilih')
                     ->icon('heroicon-o-printer')
                     ->color('primary')
+                    ->mountUsing(function (Forms\ComponentContainer $form, Collection $records) {
+                        $items = [];
+                        foreach ($records as $record) {
+                            $items[] = [
+                                'product_id' => $record->id,
+                                'code' => $record->code,
+                                'name' => $record->name,
+                                'quantity' => 1,
+                            ];
+                        }
+                        $form->fill([
+                            'sequence' => app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->getTodaySequenceString(),
+                            'items' => $items,
+                        ]);
+                    })
                     ->form([
-                        Forms\Components\TextInput::make('lot')
-                            ->label('Nomor LOT')
-                            ->default(function (Collection $records) {
-                                $first = $records->first();
-                                return $first?->default_lot ?? '012606110';
-                            })
-                            ->required()
-                            ->helperText('Nomor LOT ini akan disimpan sebagai default untuk semua produk terpilih.'),
-                        Forms\Components\TextInput::make('quantity')
-                            ->label('Jumlah Quantity (QTY)')
+                        Forms\Components\TextInput::make('sequence')
+                            ->label('Kode Urutan Hari (3 Digit)')
+                            ->default(fn () => app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->getTodaySequenceString())
+                            ->maxLength(3)
                             ->numeric()
-                            ->default(function (Collection $records) {
-                                $first = $records->first();
-                                return $first?->default_quantity ?? 1;
-                            })
-                            ->minValue(1)
                             ->required()
-                            ->helperText('Quantity yang akan dicetak pada label terpilih.'),
+                            ->helperText('Kode 3 digit urutan harian ini akan berlaku untuk seluruh produk terpilih di bawah.'),
+                        Forms\Components\Repeater::make('items')
+                            ->label('Daftar Produk Terpilih & Jumlah Duplikat Per Item')
+                            ->addable(false)
+                            ->deletable(false)
+                            ->reorderable(false)
+                            ->schema([
+                                Forms\Components\Hidden::make('product_id'),
+                                Forms\Components\TextInput::make('code')
+                                    ->label('Kode SKU')
+                                    ->disabled()
+                                    ->dehydrated(false),
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Nama Produk')
+                                    ->disabled()
+                                    ->dehydrated(false),
+                                Forms\Components\TextInput::make('quantity')
+                                    ->label('Jumlah Duplikat Lembar')
+                                    ->numeric()
+                                    ->default(1)
+                                    ->minValue(1)
+                                    ->required(),
+                            ])
+                            ->columns(3),
                     ])
-                    ->action(function (Collection $records, array $data, $livewire) {
-                        $records->each(fn ($record) => $record->update([
-                            'default_lot' => $data['lot'],
-                            'default_quantity' => (int) $data['quantity'],
-                        ]));
-                        $livewire->js(app(BuildPrintBarcodeJs::class)->handle($records->pluck('id')->all(), $data['lot'], (int) $data['quantity']));
+                    ->action(function (array $data, $livewire) {
+                        $sequence = $data['sequence'] ?? null;
+                        $items = $data['items'] ?? [];
+                        $livewire->js(app(BuildPrintBarcodeJs::class)->handle($items, $sequence));
                     })
                     ->deselectRecordsAfterCompletion(),
                 Tables\Actions\BulkActionGroup::make([

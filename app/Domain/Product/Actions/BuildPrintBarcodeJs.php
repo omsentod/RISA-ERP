@@ -15,27 +15,75 @@ class BuildPrintBarcodeJs
      *
      * @param array<int>|Collection<int> $productIds
      */
-    public function handle(array|Collection $productIds, ?string $customLot = null, ?int $customQuantity = null): string
+    public function handle(array|Collection $printItems, ?string $customSequence = null, ?int $customQuantity = null): string
     {
-        $ids = collect($productIds)->take(200)->all();
+        $itemsMap = [];
+        $ids = [];
 
-        $labels = Product::query()
+        foreach ($printItems as $item) {
+            if (is_array($item) && isset($item['product_id'])) {
+                $pid = (int) $item['product_id'];
+                $ids[] = $pid;
+                $itemsMap[$pid] = [
+                    'sequence' => $item['sequence'] ?? $customSequence,
+                    'quantity' => isset($item['quantity']) ? (int) $item['quantity'] : $customQuantity,
+                ];
+            } else {
+                $pid = (int) $item;
+                $ids[] = $pid;
+                $itemsMap[$pid] = [
+                    'sequence' => $customSequence,
+                    'quantity' => $customQuantity,
+                ];
+            }
+        }
+
+        $ids = collect($ids)->unique()->take(200)->all();
+
+        if (empty($ids)) {
+            return "alert('Tidak ada produk untuk dicetak');";
+        }
+
+        $products = Product::query()
             ->with(['registration'])
             ->whereIn('id', $ids)
             ->orderByRaw('FIELD(id,' . implode(',', array_map('intval', $ids)) . ')')
-            ->get()
-            ->map(fn (Product $p) => [
-                'code' => $p->code,
-                'name' => $p->name,
-                'specification' => $p->specification ?? '',
-                'nie_number' => $p->registration?->nie_number ?? '21302420095',
-                'lot' => !empty($customLot) ? $customLot : ($p->default_lot ?? '012606110'),
-                'quantity' => ($customQuantity !== null && $customQuantity > 0) ? $customQuantity : ($p->default_quantity ?? 1),
-                'expired_at' => $p->registration?->expired_at ? $p->registration->expired_at->format('Y m') : '2026 06',
-                'year_month' => now()->format('Y m'),
-                'svg' => $this->barcode->svg($p->code, widthFactor: 2, height: 75),
-            ])
-            ->all();
+            ->get();
+
+        $labels = [];
+
+        foreach ($products as $p) {
+            $config = $itemsMap[$p->id] ?? [];
+            
+            $itemSeq = !empty($config['sequence']) ? $config['sequence'] : $customSequence;
+            
+            if (!empty($itemSeq)) {
+                app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->recordPrintActivity($itemSeq);
+            } else {
+                $todaySeq = app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->getTodaySequenceString();
+                app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->recordPrintActivity($todaySeq);
+            }
+
+            $itemLot = app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->handle($p, $itemSeq);
+            
+            $itemQty = (isset($config['quantity']) && $config['quantity'] > 0) 
+                ? $config['quantity'] 
+                : (($customQuantity !== null && $customQuantity > 0) ? $customQuantity : 1);
+
+            for ($i = 0; $i < $itemQty; $i++) {
+                $labels[] = [
+                    'code' => $p->code,
+                    'name' => $p->name,
+                    'specification' => $p->specification ?? '',
+                    'nie_number' => $p->registration?->nie_number ?? '21302420095',
+                    'lot' => $itemLot,
+                    'quantity' => $p->default_quantity ?? 1,
+                    'expired_at' => $p->registration?->expired_at ? $p->registration->expired_at->format('Y m') : '2026 06',
+                    'year_month' => now()->format('Y m'),
+                    'svg' => $this->barcode->svg($p->code, widthFactor: 2, height: 75),
+                ];
+            }
+        }
 
         if (empty($labels)) {
             return "alert('Tidak ada produk untuk dicetak');";

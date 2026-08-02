@@ -21,6 +21,9 @@ return new class extends Migration
                 ->comment('NIE / Nomor Izin Edar produk');
             $table->string('code', 100)->unique()->comment('Kode SKU internal, contoh: OF 1010 04');
             $table->string('name', 255)->comment('Nama produk, contoh: 4.5 mm Semi Tubular Plate 4 Holes');
+            $table->text('specification')->nullable()->comment('Spesifikasi produk');
+            $table->integer('default_quantity')->default(1)->comment('Quantity default untuk cetak label');
+            $table->string('product_group_code', 20)->nullable()->comment('Kode Golongan Produk, contoh: 01, 03');
             $table->text('description')->nullable();
             $table->boolean('is_published')->default(false)->comment('Tampil di company profile website atau tidak');
             $table->timestamp('published_at')->nullable();

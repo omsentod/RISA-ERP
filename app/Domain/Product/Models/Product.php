@@ -22,7 +22,6 @@ class Product extends Model
         'code',
         'name',
         'specification',
-        'default_lot',
         'default_quantity',
         'product_group_code',
         'description',
