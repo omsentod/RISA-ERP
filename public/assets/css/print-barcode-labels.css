@@ -237,6 +237,9 @@ body {
     white-space: nowrap;
     width: 16mm;
     height: 22mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
 }
 
 /* Thermal Printer (@media print) Optimizations for Argox / Thermal Roll Printers */
