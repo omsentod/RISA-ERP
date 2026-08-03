@@ -162,19 +162,19 @@ body {
 
 .barcode-wrapper {
     width: 10mm;
-    height: 44mm;
+    height: 46mm;
     position: relative;
     flex-shrink: 0;
 }
 
 .barcode-svg-container {
     position: absolute;
-    width: 40mm;
+    width: 46mm;
     height: 10mm;
     transform: rotate(90deg);
     transform-origin: top left;
     left: 10mm;
-    top: 2mm;
+    top: 0;
 }
 
 .barcode-svg-container svg {

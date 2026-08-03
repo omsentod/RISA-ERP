@@ -78,7 +78,8 @@ class BuildPrintBarcodeJs
             $rawNie = $p->registration?->nie_number ?? '21302420095';
             $cleanNie = trim(preg_replace('/AKD\s*/i', '', $rawNie));
 
-            $rawSvg = $this->barcode->svg($p->code, widthFactor: 1, height: 50);
+            $barcodeData = str_replace(' ', '', $p->code);
+            $rawSvg = $this->barcode->svg($barcodeData, widthFactor: 3, height: 70);
             $svg = str_replace('<svg ', '<svg preserveAspectRatio="none" ', $rawSvg);
 
             for ($i = 0; $i < $itemQty; $i++) {

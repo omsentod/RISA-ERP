@@ -20,7 +20,11 @@ class AddScanToOutbound
             throw new RuntimeException('Transaksi sudah selesai / dibatalkan, tidak bisa tambah item lagi.');
         }
 
-        $product = Product::query()->where('code', $code)->first();
+        $cleanCode = str_replace(' ', '', $code);
+        $product = Product::query()
+            ->where('code', $code)
+            ->orWhereRaw("REPLACE(code, ' ', '') = ?", [$cleanCode])
+            ->first();
         if (!$product) {
             throw new RuntimeException("Produk dengan kode \"{$code}\" tidak ditemukan.");
         }
