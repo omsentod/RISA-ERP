@@ -162,25 +162,26 @@ body {
 
 .barcode-wrapper {
     width: 10mm;
-    height: 34mm;
+    height: 44mm;
     position: relative;
     flex-shrink: 0;
 }
 
 .barcode-svg-container {
     position: absolute;
-    width: 34mm;
+    width: 40mm;
     height: 10mm;
     transform: rotate(90deg);
     transform-origin: top left;
     left: 10mm;
-    top: 0;
+    top: 2mm;
 }
 
 .barcode-svg-container svg {
     width: 100%;
     height: 100%;
     display: block;
+    shape-rendering: crispEdges;
 }
 
 /* --- GROUP 4B: Material Info (Mat 316L & Current Year Month) --- */
