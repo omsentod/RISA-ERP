@@ -39,8 +39,8 @@ class GenerateProductTemplate
             ]);
 
             $sampleRows = [
-                ['Contoh Spesifikasi 1', 'SKU-001', 'Nama Produk Contoh 1', 'AKD 21302420095', 1, '01'],
-                ['Contoh Spesifikasi 2', 'SKU-002', 'Nama Produk Contoh 2', 'AKD 21302420095', 1, '03'],
+                ['Contoh Spesifikasi 1', 'SKU-001', 'Nama Produk Contoh 1', '21302420095', 1, '01'],
+                ['Contoh Spesifikasi 2', 'SKU-002', 'Nama Produk Contoh 2', '21302420095', 1, '03'],
             ];
 
             foreach ($sampleRows as $rowIndex => $row) {
