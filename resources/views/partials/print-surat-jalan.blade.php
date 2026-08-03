@@ -5,8 +5,8 @@
     $totalQty = (int) $items->sum('quantity');
     $docDate = $transaction->doc_date ?? now();
 
-    // Fill table with empty grid rows up to at least 20 rows for full NCR page appearance
-    $minRows = 20;
+    // Fill table with empty grid rows up to at least 12 rows to fit perfectly on 1 page
+    $minRows = 12;
     $actualCount = $items->count();
     $emptyRowsCount = max(0, $minRows - $actualCount);
 @endphp
@@ -25,7 +25,6 @@
         {{-- ================= TOP HEADER ================= --}}
         <div class="header-top">
             <div class="company-info">
-                <div class="doc-sop">No Dok : RI-SOP-ADM-04-A</div>
                 <div class="company-name">PT.Risa Implantama</div>
                 <div class="company-addr">Jl. Raya Medokan Sawah Timur No 41</div>
                 <div class="company-city">Surabaya</div>

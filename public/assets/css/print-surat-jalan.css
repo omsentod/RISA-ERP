@@ -1,6 +1,6 @@
 @page {
-    size: A4 portrait;
-    margin: 8mm 10mm;
+    size: 215mm 280mm; /* Standard NCR Continuous Form */
+    margin: 5mm 8mm;
 }
 
 * {
@@ -10,21 +10,23 @@
 }
 
 html, body {
-    width: 100%;
+    width: 215mm;
     font-family: Arial, Helvetica, sans-serif;
     color: #000;
     background: #fff;
-    font-size: 9pt;
-    line-height: 1.2;
+    font-size: 8pt;
+    line-height: 1.15;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
 }
 
 .page {
     width: 100%;
-    max-width: 210mm;
+    max-width: 215mm;
     margin: 0 auto;
-    padding: 2mm;
+    padding: 0;
+    page-break-inside: avoid;
+    break-inside: avoid;
 }
 
 /* TOP HEADER */
@@ -32,47 +34,42 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 3mm;
+    margin-bottom: 2mm;
 }
 
 .company-info {
-    font-size: 8.5pt;
-    line-height: 1.3;
-}
-
-.doc-sop {
     font-size: 8pt;
-    margin-bottom: 1.5mm;
+    line-height: 1.2;
 }
 
 .company-name {
-    font-size: 9.5pt;
+    font-size: 9pt;
     font-weight: bold;
 }
 
 .company-addr, .company-city {
-    font-size: 8.5pt;
+    font-size: 8pt;
 }
 
 .meta-info {
     text-align: right;
-    font-size: 9pt;
+    font-size: 8.5pt;
     font-weight: bold;
-    line-height: 1.4;
+    line-height: 1.3;
 }
 
 .meta-info .doc-no {
-    margin-bottom: 1mm;
+    margin-bottom: 0.5mm;
 }
 
 /* TITLE */
 .title-section {
     text-align: center;
-    margin-bottom: 4mm;
+    margin-bottom: 2.5mm;
 }
 
 .title-section .title {
-    font-size: 11pt;
+    font-size: 10.5pt;
     font-weight: bold;
     text-decoration: none;
 }
@@ -81,14 +78,16 @@ html, body {
 table.ncr-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 8.5pt;
-    margin-bottom: 6mm;
+    font-size: 8pt;
+    margin-bottom: 3mm;
+    page-break-inside: avoid;
+    break-inside: avoid;
 }
 
 table.ncr-table th,
 table.ncr-table td {
     border: 1px solid #000;
-    padding: 1.2mm 2mm;
+    padding: 0.8mm 1.5mm;
     vertical-align: middle;
 }
 
@@ -96,16 +95,18 @@ table.ncr-table th {
     font-weight: bold;
     text-align: center;
     background: #fff;
+    font-size: 8pt;
+    padding: 1mm 1.5mm;
 }
 
 /* COLUMN WIDTHS & ALIGNMENT */
 .col-no {
-    width: 10mm;
+    width: 8mm;
     text-align: center;
 }
 
 .col-item {
-    width: 26mm;
+    width: 24mm;
     text-align: left;
 }
 
@@ -114,31 +115,32 @@ table.ncr-table th {
 }
 
 .col-nie {
-    width: 40mm;
+    width: 38mm;
     text-align: left;
     white-space: nowrap;
 }
 
 .col-batch {
-    width: 28mm;
+    width: 25mm;
     text-align: center;
     white-space: nowrap;
 }
 
 .col-jumlah {
-    width: 22mm;
+    width: 20mm;
     text-align: right;
     white-space: nowrap;
 }
 
 /* EMPTY GRID ROWS FOR NCR FORM */
 table.ncr-table tr.empty-row td {
-    height: 5.8mm;
+    height: 4.2mm;
 }
 
 /* FOOTER TOTAL */
 table.ncr-table tfoot td {
     font-weight: bold;
+    padding: 1mm 1.5mm;
 }
 
 table.ncr-table td.total-label {
@@ -155,8 +157,10 @@ table.ncr-table td.total-value {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    margin-top: 4mm;
+    margin-top: 3mm;
     padding: 0 4mm;
+    page-break-inside: avoid;
+    break-inside: avoid;
 }
 
 .sig-box {
@@ -165,18 +169,18 @@ table.ncr-table td.total-value {
 }
 
 .sig-box .sig-date {
-    font-size: 9pt;
-    margin-bottom: 1.5mm;
+    font-size: 8pt;
+    margin-bottom: 1mm;
 }
 
 .sig-box .sig-title {
-    font-size: 9pt;
+    font-size: 8.5pt;
     font-weight: bold;
-    margin-bottom: 14mm;
+    margin-bottom: 8mm;
 }
 
 .sig-box .sig-space {
-    height: 14mm;
+    height: 9mm;
 }
 
 .sig-box .sig-line {
@@ -186,12 +190,12 @@ table.ncr-table td.total-value {
 
 @media print {
     @page {
-        size: A4 portrait;
-        margin: 5mm 8mm;
+        size: 215mm 280mm;
+        margin: 4mm 6mm !important;
     }
     
     html, body {
-        width: 100% !important;
+        width: 215mm !important;
         margin: 0 !important;
         padding: 0 !important;
     }
@@ -200,5 +204,12 @@ table.ncr-table td.total-value {
         width: 100% !important;
         max-width: 100% !important;
         padding: 0 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    .signature-section {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
     }
 }
