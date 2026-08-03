@@ -35,11 +35,11 @@
                 <!-- GROUP 3: NIE, REF, LOT, QTY -->
                 <div class="group-3">
                     @if (!empty($label['nie_number']) && $label['nie_number'] !== '-')
-                        <div class="v-text nie-text">NIE {{ $label['nie_number'] }}</div>
+                        <div class="v-text nie-text"><span class="lbl">NIE</span> <span class="val">{{ trim(preg_replace('/AKD\s*/i', '', $label['nie_number'])) }}</span></div>
                     @endif
-                    <div class="v-text ref-text">REF {{ $label['code'] }}</div>
-                    <div class="v-text lot-text">LOT {{ $label['lot'] ?? '012606110' }}</div>
-                    <div class="v-text qty-text">QTY {{ $label['quantity'] ?? 1 }}</div>
+                    <div class="v-text ref-text"><span class="lbl">REF</span> <span class="val">{{ $label['code'] }}</span></div>
+                    <div class="v-text lot-text"><span class="lbl">LOT</span> <span class="val">{{ $label['lot'] ?? '012606110' }}</span></div>
+                    <div class="v-text qty-text"><span class="lbl">QTY</span> <span class="val">{{ $label['quantity'] ?? 1 }}</span></div>
                 </div>
 
                 <!-- GROUP 4: Barcode & Code -->

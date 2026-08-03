@@ -75,17 +75,23 @@ class BuildPrintBarcodeJs
 
             $formattedName = $this->formatName->handle($p->name);
 
+            $rawNie = $p->registration?->nie_number ?? '21302420095';
+            $cleanNie = trim(preg_replace('/AKD\s*/i', '', $rawNie));
+
+            $rawSvg = $this->barcode->svg($p->code, widthFactor: 2, height: 70);
+            $svg = str_replace('<svg ', '<svg preserveAspectRatio="none" ', $rawSvg);
+
             for ($i = 0; $i < $itemQty; $i++) {
                 $labels[] = [
                     'code' => $p->code,
                     'name' => $formattedName,
                     'specification' => $p->specification ?? '',
-                    'nie_number' => $p->registration?->nie_number ?? '21302420095',
+                    'nie_number' => $cleanNie,
                     'lot' => $itemLot,
                     'quantity' => $p->default_quantity ?? 1,
                     'expired_at' => $p->registration?->expired_at ? $p->registration->expired_at->format('Y m') : '2026 06',
                     'year_month' => now()->format('Y m'),
-                    'svg' => $this->barcode->svg($p->code, widthFactor: 2, height: 75),
+                    'svg' => $svg,
                 ];
             }
         }

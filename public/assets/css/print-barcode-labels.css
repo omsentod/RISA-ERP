@@ -126,9 +126,9 @@ body {
     display: flex;
     flex-direction: row-reverse;
     align-items: flex-start;
-    gap: 1.5mm;
+    gap: 2mm;
     height: 100%;
-    font-size: 8pt;
+    font-size: 8.5pt;
     font-weight: normal;
     padding-top: 1mm;
     flex-shrink: 0;
@@ -139,7 +139,13 @@ body {
 .lot-text,
 .qty-text {
     white-space: nowrap;
-    line-height: 1;
+    line-height: 1.15;
+    letter-spacing: 0.2px;
+}
+
+.group-3 .lbl {
+    display: inline-block;
+    height: 8mm;
 }
 
 /* --- GROUP 4: Barcode SVG & Code --- */
@@ -147,21 +153,23 @@ body {
     display: flex;
     flex-direction: row-reverse;
     align-items: center;
+    justify-content: center;
     height: 100%;
-    width: 19mm;
+    width: 14mm;
     flex-shrink: 0;
+    gap: 1mm;
 }
 
 .barcode-wrapper {
     width: 10mm;
-    height: 28mm;
+    height: 34mm;
     position: relative;
     flex-shrink: 0;
 }
 
 .barcode-svg-container {
     position: absolute;
-    width: 28mm;
+    width: 34mm;
     height: 10mm;
     transform: rotate(90deg);
     transform-origin: top left;
@@ -175,24 +183,26 @@ body {
     display: block;
 }
 
+/* --- GROUP 4B: Material Info (Mat 316L & Current Year Month) --- */
+.group-mat {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    width: 9mm;
+    height: 100%;
+    padding-bottom: 5.5mm;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    position: relative;
+}
+
 .barcode-num {
     font-size: 7.5pt;
     font-weight: bold;
     letter-spacing: 0.5px;
     text-align: center;
     white-space: nowrap;
-    margin-right: 1mm;
-}
-
-/* --- GROUP 4B: Material Info (Mat 316L & Current Year Month) --- */
-.group-mat {
-    display: flex;
-    align-items: flex-end;
-    justify-content: flex-start;
-    width: 9mm;
-    height: 100%;
-    padding-bottom: 1mm;
-    flex-shrink: 0;
 }
 
 .mat-text {
@@ -211,12 +221,14 @@ body {
     align-items: center;
     height: 100%;
     width: 19mm;
+    padding-bottom: 5.5mm;
+    box-sizing: border-box;
     flex-shrink: 0;
 }
 
 .symbols-block {
     width: 18mm;
-    height: 22mm;
+    height: 20mm;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -235,8 +247,8 @@ body {
     line-height: 1.15;
     text-align: left;
     white-space: nowrap;
-    width: 16mm;
-    height: 22mm;
+    width: 17mm;
+    height: auto;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
