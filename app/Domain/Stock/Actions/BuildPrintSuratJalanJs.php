@@ -12,7 +12,7 @@ class BuildPrintSuratJalanJs
      */
     public function handle(OutboundTransaction $transaction): string
     {
-        $transaction->load('items.product', 'creator');
+        $transaction->load(['items.product.registration', 'creator']);
 
         $html = view('partials.print-surat-jalan', ['transaction' => $transaction])->render();
         $encoded = base64_encode($html);

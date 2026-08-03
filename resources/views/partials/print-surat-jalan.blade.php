@@ -1,137 +1,115 @@
 @php
     use Illuminate\Support\Carbon;
 
-    $itemsCount = $transaction->items->count();
-    $totalQty = (int) $transaction->items->sum('quantity');
-    $waktu = $transaction->completed_at ?? $transaction->started_at;
-    $logoData = null;
-    $logoPath = public_path('assets/images/risa-logo.png');
-    if (is_file($logoPath)) {
-        $logoData = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
-    }
+    $items = $transaction->items;
+    $totalQty = (int) $items->sum('quantity');
+    $docDate = $transaction->doc_date ?? now();
+
+    // Fill table with empty grid rows up to at least 20 rows for full NCR page appearance
+    $minRows = 20;
+    $actualCount = $items->count();
+    $emptyRowsCount = max(0, $minRows - $actualCount);
 @endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="utf-8">
-    <title>Surat Jalan {{ $transaction->doc_no }}</title>
+    <title>Surat Jalan Pengiriman {{ $transaction->doc_no }}</title>
     <style>
         {!! file_get_contents(public_path('assets/css/print-surat-jalan.css')) !!}
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="page">
 
-        {{-- ================= HEADER ================= --}}
-        <div class="header">
-            <div>
-                <div class="brand">
-                    @if ($logoData)
-                        <img src="{{ $logoData }}" alt="RISA" class="logo">
-                    @endif
-                </div>
-              
-                <div class="company-address">
-                    <p>Jl. Rungkut Industri III No. 86</p>
-                    <p>Surabaya, Jawa Timur — Indonesia</p>
-                    <p>Telp: +62 3151 90 6646 · risa.implantama@gmail.com</p>
-                </div>
+        {{-- ================= TOP HEADER ================= --}}
+        <div class="header-top">
+            <div class="company-info">
+                <div class="doc-sop">No Dok : RI-SOP-ADM-04-A</div>
+                <div class="company-name">PT.Risa Implantama</div>
+                <div class="company-addr">Jl. Raya Medokan Sawah Timur No 41</div>
+                <div class="company-city">Surabaya</div>
             </div>
-            <div class="doc-header">
-                <p class="title">Surat Jalan</p>
-                <p class="doc-no">{{ $transaction->doc_no }}</p>
-                <div class="doc-meta">
-                    <p>Tanggal : <strong>{{ $transaction->doc_date?->translatedFormat('d F Y') }}</strong></p>
-                </div>
+            <div class="meta-info">
+                <div class="doc-no">No : {{ $transaction->doc_no }}</div>
+                <div class="distributor">Dist: {{ $transaction->destination ?: '-' }}</div>
             </div>
         </div>
 
-        {{-- ================= SHIPMENT INFO ================= --}}
-        <div class="shipment">
-            <div>
-                <div class="label">Tujuan Pengiriman</div>
-                <div class="card">
-                    <div class="primary">{{ $transaction->destination ?: '—' }}</div>
-                    <div class="hint">Mohon periksa barang setelah diterima sesuai daftar kuantitas di bawah ini.</div>
-                </div>
-            </div>
-            <div>
-                <div class="label">Detail Pengiriman</div>
-                <div class="card">
-                    <div class="row"><strong>Penanggung Jawab:</strong> {{ $transaction->creator?->name ?: '—' }}</div>
-                    <div class="row"><strong>Jenis Barang:</strong> {{ $itemsCount }} jenis</div>
-                    <div class="row"><strong>Total Kuantitas:</strong> {{ $totalQty }} pcs</div>
-                </div>
-            </div>
+        {{-- ================= TITLE ================= --}}
+        <div class="title-section">
+            <h1 class="title">Surat Jalan Pengiriman</h1>
         </div>
 
         {{-- ================= ITEMS TABLE ================= --}}
-        <div class="items-wrap">
-            <table class="items">
-                <thead>
-                    <tr>
-                        <th class="no">No</th>
-                        <th class="code">Kode Barcode</th>
-                        <th>Nama Produk / Spesifikasi</th>
-                        <th class="qty">Jumlah</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($transaction->items as $i => $item)
-                        <tr>
-                            <td class="no">{{ $i + 1 }}</td>
-                            <td class="code">{{ $item->product?->code }}</td>
-                            <td>
-                                @if (!empty($item->product?->specification))
-                                    <div class="spec">{{ $item->product->specification }}</div>
-                                    <div class="name">{{ $item->product?->name }}</div>
-                                @else
-                                    <div class="spec">{{ $item->product?->name }}</div>
-                                @endif
-                            </td>
-                            <td class="qty">{{ $item->quantity }} pcs</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td class="label" colspan="3">Total Pengiriman</td>
-                        <td class="total-qty">{{ $totalQty }} pcs</td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
+        <table class="ncr-table">
+            <thead>
+                <tr>
+                    <th class="col-no">No</th>
+                    <th class="col-item">Item</th>
+                    <th class="col-keterangan">Keterangan</th>
+                    <th class="col-nie">NIE</th>
+                    <th class="col-batch">Batch Number</th>
+                    <th class="col-jumlah">Jumlah</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($items as $index => $item)
+                    @php
+                        $product = $item->product;
+                        $rawNie = $product?->registration?->nie_number ?? '21302420236';
+                        $cleanNie = trim(preg_replace('/AKD\s*/i', '', $rawNie));
+                        $formattedNie = 'AKD ' . $cleanNie;
 
-        {{-- ================= NOTES ================= --}}
-        @if ($transaction->notes)
-            <div class="notes">
-                <div class="label">Keterangan / Catatan Tambahan</div>
-                <div class="body">{!! nl2br(e($transaction->notes)) !!}</div>
-            </div>
-        @endif
+                        $batchNumber = $product?->default_lot;
+                        if (empty($batchNumber) && $product) {
+                            $batchNumber = app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->handle($product);
+                        }
+                        if (empty($batchNumber)) {
+                            $batchNumber = '082607119';
+                        }
+                    @endphp
+                    <tr>
+                        <td class="col-no">{{ $index + 1 }}</td>
+                        <td class="col-item">{{ $product?->code }}</td>
+                        <td class="col-keterangan">{{ $product?->name }}</td>
+                        <td class="col-nie">{{ $formattedNie }}</td>
+                        <td class="col-batch">{{ $batchNumber }}</td>
+                        <td class="col-jumlah">{{ $item->quantity }} Pcs</td>
+                    </tr>
+                @endforeach
 
-        {{-- ================= SIGNATURES ================= --}}
-        <div class="signatures">
-            <div class="box">
-                <div class="role">Dibuat Oleh (Operator),</div>
-                <div class="line">
-                    <div class="name">{{ $transaction->creator?->name ?: '—' }}</div>
-                    <div class="sub">Staff Logistik RISA</div>
-                </div>
+                @for ($i = 0; $i < $emptyRowsCount; $i++)
+                    <tr class="empty-row">
+                        <td class="col-no"></td>
+                        <td class="col-item"></td>
+                        <td class="col-keterangan"></td>
+                        <td class="col-nie"></td>
+                        <td class="col-batch"></td>
+                        <td class="col-jumlah"></td>
+                    </tr>
+                @endfor
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="5" class="total-label">Total</td>
+                    <td class="total-value">{{ $totalQty }} Pcs</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        {{-- ================= SIGNATURES (2 PLACES ONLY: LEFT & RIGHT) ================= --}}
+        <div class="signature-section">
+            <div class="sig-box sig-left">
+                <div class="sig-title">Yang Menyerahkan</div>
+                <div class="sig-space"></div>
+                <div class="sig-line"></div>
             </div>
-            <div class="box">
-                <div class="role">Dikirim Oleh (Ekspedisi),</div>
-                <div class="line">
-                    <div class="placeholder">......................</div>
-                    <div class="sub">Nama Kurir / Tanda Tangan</div>
-                </div>
-            </div>
-            <div class="box">
-                <div class="role">Diterima Oleh,</div>
-                <div class="line">
-                    <div class="name">{{ $transaction->destination ?: '—' }}</div>
-                    <div class="sub">Nama Penerima & Stempel</div>
-                </div>
+            <div class="sig-box sig-right">
+                <div class="sig-date">Sby, {{ $docDate->translatedFormat('d F Y') }}</div>
+                <div class="sig-title">Yang Menerima</div>
+                <div class="sig-space"></div>
+                <div class="sig-line"></div>
             </div>
         </div>
 

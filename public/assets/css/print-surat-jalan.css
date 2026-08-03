@@ -1,260 +1,204 @@
 @page {
-    size: A5;
-    margin: 8mm;
+    size: A4 portrait;
+    margin: 8mm 10mm;
 }
+
 * {
     box-sizing: border-box;
-}
-html, body {
     margin: 0;
-    padding: 0;
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    color: #111827;
-    background: #fff;
-    font-size: 9pt;
-    line-height: 1.35;
-}
-.container {
     padding: 0;
 }
 
-/* ---------- HEADER ---------- */
-.header {
+html, body {
+    width: 100%;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #000;
+    background: #fff;
+    font-size: 9pt;
+    line-height: 1.2;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.page {
+    width: 100%;
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 2mm;
+}
+
+/* TOP HEADER */
+.header-top {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 6mm;
-    padding-bottom: 5mm;
-    border-bottom: 1.5px solid #111827;
-    margin-bottom: 6mm;
-}
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 3mm;
-}
-.brand .logo {
-    height: 14mm;
-    width: auto;
-    object-fit: contain;
+    margin-bottom: 3mm;
 }
 
-.company-address {
-    margin-top: 2.5mm;
-    font-size: 7.5pt;
-    color: #111827;
-    line-height: 1.4;
-}
-.company-address p { margin: 0; }
-
-.doc-header {
-    text-align: right;
-    min-width: 45mm;
-}
-.doc-header .title {
-    font-size: 14pt;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: #111827;
-    margin: 0;
-}
-.doc-header .doc-no {
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 9pt;
-    font-weight: 700;
-    color: #1d4ed8;
-    margin: 1mm 0 2mm;
-}
-.doc-header .doc-meta {
-    font-size: 7.5pt;
-    color: #6b7280;
-}
-.doc-header .doc-meta strong {
-    color: #111827;
-    font-weight: 600;
+.company-info {
+    font-size: 8.5pt;
+    line-height: 1.3;
 }
 
-/* ---------- SHIPMENT INFO ---------- */
-.shipment {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4mm;
-    margin-bottom: 5mm;
-}
-.shipment .label {
-    font-size: 7pt;
-    font-weight: 700;
-    color: #9ca3af;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
+.doc-sop {
+    font-size: 8pt;
     margin-bottom: 1.5mm;
 }
-.shipment .card {
-    padding: 3mm;
-    border: 1px solid #e5e7eb;
-    border-radius: 2mm;
-    background: #f9fafb;
-}
-.shipment .card .primary {
-    font-weight: 700;
+
+.company-name {
     font-size: 9.5pt;
-    color: #111827;
-}
-.shipment .card .hint {
-    font-size: 7pt;
-    color: #6b7280;
-    margin-top: 1mm;
-    line-height: 1.4;
-}
-.shipment .card .row {
-    font-size: 8pt;
-    color: #4b5563;
-    margin-top: 0.8mm;
-}
-.shipment .card .row strong {
-    color: #111827;
-    font-weight: 600;
+    font-weight: bold;
 }
 
-/* ---------- ITEMS TABLE ---------- */
-.items-wrap {
-    border: 1px solid #e5e7eb;
-    border-radius: 2mm;
-    overflow: hidden;
-    margin-bottom: 5mm;
+.company-addr, .company-city {
+    font-size: 8.5pt;
 }
-table.items {
+
+.meta-info {
+    text-align: right;
+    font-size: 9pt;
+    font-weight: bold;
+    line-height: 1.4;
+}
+
+.meta-info .doc-no {
+    margin-bottom: 1mm;
+}
+
+/* TITLE */
+.title-section {
+    text-align: center;
+    margin-bottom: 4mm;
+}
+
+.title-section .title {
+    font-size: 11pt;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+/* NCR TABLE */
+table.ncr-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 8.5pt;
-}
-table.items thead {
-    background: #f3f4f6;
-    border-bottom: 1px solid #e5e7eb;
-}
-table.items th {
-    padding: 2.5mm 2mm;
-    text-align: left;
-    font-weight: 700;
-    color: #374151;
-    font-size: 8pt;
-}
-table.items th.no,
-table.items td.no {
-    text-align: center;
-    width: 8mm;
-    color: #6b7280;
-}
-table.items th.code,
-table.items td.code {
-    width: 26mm;
-    font-family: 'Courier New', Courier, monospace;
-    font-weight: 700;
-    color: #1e40af;
-}
-table.items th.qty,
-table.items td.qty {
-    text-align: center;
-    width: 16mm;
-    font-weight: 800;
-    color: #111827;
-}
-table.items tbody tr {
-    border-top: 1px solid #f3f4f6;
-}
-table.items tbody tr:first-child {
-    border-top: none;
-}
-table.items td {
-    padding: 2.2mm 2mm;
-    vertical-align: top;
-}
-table.items td .spec {
-    font-weight: 700;
-    color: #111827;
-}
-table.items td .name {
-    font-size: 7pt;
-    color: #6b7280;
-    margin-top: 0.4mm;
-}
-table.items tfoot tr {
-    background: #f9fafb;
-    border-top: 1.5px solid #111827;
-}
-table.items tfoot td {
-    padding: 2.8mm 2mm;
-    font-weight: 800;
-}
-table.items tfoot .label {
-    text-align: right;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #374151;
-    font-size: 8pt;
-}
-table.items tfoot .total-qty {
-    text-align: center;
-    color: #1e3a8a;
-    font-size: 11pt;
-    font-weight: 900;
+    margin-bottom: 6mm;
 }
 
-/* ---------- NOTES ---------- */
-.notes {
-    margin-bottom: 5mm;
+table.ncr-table th,
+table.ncr-table td {
+    border: 1px solid #000;
+    padding: 1.2mm 2mm;
+    vertical-align: middle;
 }
-.notes .label {
-    font-size: 7pt;
-    font-weight: 700;
-    color: #9ca3af;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
+
+table.ncr-table th {
+    font-weight: bold;
+    text-align: center;
+    background: #fff;
+}
+
+/* COLUMN WIDTHS & ALIGNMENT */
+.col-no {
+    width: 10mm;
+    text-align: center;
+}
+
+.col-item {
+    width: 26mm;
+    text-align: left;
+}
+
+.col-keterangan {
+    text-align: left;
+}
+
+.col-nie {
+    width: 40mm;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.col-batch {
+    width: 28mm;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.col-jumlah {
+    width: 22mm;
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* EMPTY GRID ROWS FOR NCR FORM */
+table.ncr-table tr.empty-row td {
+    height: 5.8mm;
+}
+
+/* FOOTER TOTAL */
+table.ncr-table tfoot td {
+    font-weight: bold;
+}
+
+table.ncr-table td.total-label {
+    text-align: right;
+    padding-right: 3mm;
+}
+
+table.ncr-table td.total-value {
+    text-align: right;
+}
+
+/* SIGNATURE SECTION (2 PLACES ONLY: LEFT & RIGHT) */
+.signature-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 4mm;
+    padding: 0 4mm;
+}
+
+.sig-box {
+    width: 55mm;
+    text-align: center;
+}
+
+.sig-box .sig-date {
+    font-size: 9pt;
     margin-bottom: 1.5mm;
 }
-.notes .body {
-    padding: 3mm;
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 2mm;
-    font-size: 8pt;
-    color: #374151;
-    line-height: 1.4;
+
+.sig-box .sig-title {
+    font-size: 9pt;
+    font-weight: bold;
+    margin-bottom: 14mm;
 }
 
-/* ---------- SIGNATURES ---------- */
-.signatures {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 5mm;
-    margin-top: 12mm;
-    text-align: center;
-    font-size: 8pt;
+.sig-box .sig-space {
+    height: 14mm;
 }
-.signatures .box .role {
-    color: #6b7280;
-    margin-bottom: 16mm;
+
+.sig-box .sig-line {
+    border-bottom: 1px solid #000;
+    width: 100%;
 }
-.signatures .box .line {
-    border-top: 1px dashed #9ca3af;
-    padding-top: 1.5mm;
-}
-.signatures .box .name {
-    font-weight: 700;
-    color: #111827;
-    font-size: 8.5pt;
-}
-.signatures .box .placeholder {
-    color: #d1d5db;
-    font-weight: 700;
-    font-size: 8.5pt;
-}
-.signatures .box .sub {
-    font-size: 6.5pt;
-    color: #9ca3af;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-top: 0.5mm;
+
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 5mm 8mm;
+    }
+    
+    html, body {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .page {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+    }
 }
