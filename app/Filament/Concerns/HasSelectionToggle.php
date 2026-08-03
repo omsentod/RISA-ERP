@@ -43,6 +43,11 @@ trait HasSelectionToggle
 
         if (!$this->selectMode) {
             $table->bulkActions([]);
+        } else {
+            // Ketika multi-pilih ON, jangan reset selection saat user ganti
+            // keyword search / filter — memungkinkan build up selection dari
+            // beberapa kata kunci berbeda sebelum trigger bulk action.
+            $table->deselectAllRecordsWhenFiltered(false);
         }
 
         return $table;
