@@ -79,23 +79,28 @@ body {
 }
 
 .product-title {
-    font-size: 9.5pt;
+    font-size: 12pt;
     font-weight: bold;
     line-height: 1.15;
     text-align: left;
     width: 16mm;
-    max-height: 28mm;
+    max-height: 30mm;
     overflow: hidden;
     white-space: normal;
     word-break: break-word;
 }
 
 .product-title.product-title-sm {
-    font-size: 8pt;
-    line-height: 1.1;
+    font-size: 9.2pt;
+    line-height: 1.12;
 }
 
 .product-title.product-title-xs {
+    font-size: 8.2pt;
+    line-height: 1.08;
+}
+
+.product-title.product-title-xxs {
     font-size: 7.2pt;
     line-height: 1.05;
 }
@@ -193,7 +198,7 @@ body {
     justify-content: flex-end;
     width: 9mm;
     height: 100%;
-    padding-bottom: 5.5mm;
+    padding-bottom: 2mm;
     box-sizing: border-box;
     flex-shrink: 0;
     position: relative;
@@ -223,14 +228,14 @@ body {
     align-items: center;
     height: 100%;
     width: 19mm;
-    padding-bottom: 1.5mm;
+    padding-bottom: 4mm;
     box-sizing: border-box;
     flex-shrink: 0;
 }
 
 .symbols-block {
     width: 19mm;
-    height: 23mm;
+    height: 22mm;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -246,16 +251,17 @@ body {
 }
 
 .produksi-block {
-    font-size: 5pt;
+    font-size: 6.5pt;
     font-weight: bold;
-    line-height: 1.1;
+    line-height: 1.15;
     text-align: left;
     white-space: nowrap;
-    width: 18mm;
+    width: 7mm;
     height: auto;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
+    align-items: center;
 }
 
 /* Thermal Printer (@media print) Optimizations for Argox / Thermal Roll Printers */

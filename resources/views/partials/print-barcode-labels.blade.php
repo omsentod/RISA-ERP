@@ -17,8 +17,9 @@
                     $cleanText = strip_tags(str_replace('&nbsp;', ' ', $label['name']));
                     $textLen = strlen($cleanText);
                     $fontClass = match(true) {
-                        $textLen > 40 => 'product-title-xs',
-                        $textLen > 30 => 'product-title-sm',
+                        $textLen > 50 => 'product-title-xxs',
+                        $textLen > 38 => 'product-title-xs',
+                        $textLen > 25 => 'product-title-sm',
                         default => '',
                     };
                 @endphp
