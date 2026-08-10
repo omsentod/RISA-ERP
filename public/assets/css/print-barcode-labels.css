@@ -228,9 +228,10 @@ body {
     align-items: center;
     height: 100%;
     width: 19mm;
-    padding-bottom: 4mm;
+    padding-bottom: 5mm;
     box-sizing: border-box;
     flex-shrink: 0;
+    padding-left: 15px;
 }
 
 .symbols-block {
@@ -252,7 +253,7 @@ body {
 
 .produksi-block {
     font-size: 6.5pt;
-    font-weight: bold;
+    font-weight: medium;
     line-height: 1.15;
     text-align: left;
     white-space: nowrap;
@@ -260,8 +261,9 @@ body {
     height: auto;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    justify-content: flex-start;
     align-items: center;
+
 }
 
 /* Thermal Printer (@media print) Optimizations for Argox / Thermal Roll Printers */
