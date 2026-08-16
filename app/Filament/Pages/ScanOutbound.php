@@ -59,7 +59,7 @@ class ScanOutbound extends Page
         }
 
         try {
-            [$item, $isNew] = app(AddScanToOutbound::class)->handle($this->transaction, $code);
+            $result = app(AddScanToOutbound::class)->handle($this->transaction, $code);
         } catch (\Throwable $e) {
             Notification::make()->title('Scan gagal')->body($e->getMessage())->danger()->send();
 
@@ -67,9 +67,12 @@ class ScanOutbound extends Page
         }
 
         $this->refreshTransaction();
+
+        ['item' => $item, 'isNew' => $isNew, 'qtyAdded' => $qtyAdded] = $result;
+
         Notification::make()
             ->title($isNew ? 'Item ditambahkan' : 'Qty di-update')
-            ->body("{$item->product->code} — qty sekarang {$item->quantity}")
+            ->body("{$item->product->code} — qty sekarang {$item->quantity} (+{$qtyAdded} pcs)")
             ->success()
             ->duration(2000)
             ->send();

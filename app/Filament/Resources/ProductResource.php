@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Domain\Product\Actions\BuildPrintBarcodeJs;
+use App\Domain\Product\Actions\GenerateDynamicLot;
 use App\Domain\Product\Models\Product;
 use App\Filament\Resources\ProductResource\Pages;
 use Filament\Forms;
@@ -180,24 +181,37 @@ class ProductResource extends Resource
                     ->form([
                         Forms\Components\TextInput::make('sequence')
                             ->label('Kode LOT Hari Ini')
-                            ->default(fn () => app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->getTodaySequenceString())
+                            ->default(fn () => app(GenerateDynamicLot::class)->getTodaySequenceString())
                             ->maxLength(3)
                             ->numeric()
                             ->required()
                             ->helperText(function (Product $record) {
-                                $fullLot = app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->handle($record);
+                                $fullLot = app(GenerateDynamicLot::class)->handle($record);
+
                                 return "Nomor LOT otomatis yang akan tercetak: {$fullLot} (Golongan + YY + MM + Urutan).";
                             }),
-                        Forms\Components\TextInput::make('quantity')
-                            ->label('Jumlah Duplikat Lembar Label')
+                        Forms\Components\TextInput::make('quantity_per_label')
+                            ->label('Qty per Label (pcs)')
+                            ->numeric()
+                            ->default(fn (Product $record) => (int) ($record->default_quantity ?? 1))
+                            ->minValue(1)
+                            ->required()
+                            ->helperText('Jumlah pcs yang dilekatkan ke label ini. Angka ini akan terekam otomatis ke Produk Keluar saat label discan.'),
+                        Forms\Components\TextInput::make('duplicate_count')
+                            ->label('Jumlah Duplikat Lembar')
                             ->numeric()
                             ->default(1)
                             ->minValue(1)
                             ->required()
-                            ->helperText('Berapa kali stiker label ini akan diprint (jumlah lembar).'),
+                            ->helperText('Berapa lembar stiker dengan qty di atas yang mau dicetak. Setiap lembar dapat barcode unik sendiri.'),
                     ])
                     ->action(function (Product $record, array $data, $livewire) {
-                        $livewire->js(app(BuildPrintBarcodeJs::class)->handle([$record->id], $data['sequence'], (int) $data['quantity']));
+                        $livewire->js(app(BuildPrintBarcodeJs::class)->handle(
+                            [$record->id],
+                            $data['sequence'],
+                            (int) $data['duplicate_count'],
+                            (int) $data['quantity_per_label'],
+                        ));
                     }),
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
@@ -214,24 +228,25 @@ class ProductResource extends Resource
                                 'product_id' => $record->id,
                                 'code' => $record->code,
                                 'name' => $record->name,
-                                'quantity' => 1,
+                                'quantity_per_label' => (int) ($record->default_quantity ?? 1),
+                                'duplicate_count' => 1,
                             ];
                         }
                         $form->fill([
-                            'sequence' => app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->getTodaySequenceString(),
+                            'sequence' => app(GenerateDynamicLot::class)->getTodaySequenceString(),
                             'items' => $items,
                         ]);
                     })
                     ->form([
                         Forms\Components\TextInput::make('sequence')
                             ->label('Kode LOT Hari Ini')
-                            ->default(fn () => app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->getTodaySequenceString())
+                            ->default(fn () => app(GenerateDynamicLot::class)->getTodaySequenceString())
                             ->maxLength(3)
                             ->numeric()
                             ->required()
                             ->helperText('Kode 3 digit urutan harian ini akan berlaku untuk seluruh produk terpilih di bawah.'),
                         Forms\Components\Repeater::make('items')
-                            ->label('Daftar Produk Terpilih & Jumlah Duplikat Per Item')
+                            ->label('Daftar Produk Terpilih (Qty per Label & Jumlah Lembar)')
                             ->addable(false)
                             ->deletable(false)
                             ->reorderable(false)
@@ -244,15 +259,23 @@ class ProductResource extends Resource
                                 Forms\Components\TextInput::make('name')
                                     ->label('Nama Produk')
                                     ->disabled()
-                                    ->dehydrated(false),
-                                Forms\Components\TextInput::make('quantity')
-                                    ->label('Jumlah Duplikat Lembar')
+                                    ->dehydrated(false)
+                                    ->columnSpan(2),
+                                Forms\Components\TextInput::make('quantity_per_label')
+                                    ->label('Qty per Label (pcs)')
+                                    ->numeric()
+                                    ->default(1)
+                                    ->minValue(1)
+                                    ->required()
+                                    ->helperText('Terekam ke Produk Keluar saat discan.'),
+                                Forms\Components\TextInput::make('duplicate_count')
+                                    ->label('Jumlah Lembar')
                                     ->numeric()
                                     ->default(1)
                                     ->minValue(1)
                                     ->required(),
                             ])
-                            ->columns(3),
+                            ->columns(4),
                     ])
                     ->action(function (array $data, $livewire) {
                         $sequence = $data['sequence'] ?? null;

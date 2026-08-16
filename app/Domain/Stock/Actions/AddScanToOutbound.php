@@ -8,40 +8,56 @@ use RuntimeException;
 
 class AddScanToOutbound
 {
-    /**
-     * Cari produk by code, tambah ke transaksi (increment qty kalau sudah ada).
-     * Return [item, isNewItem, product].
-     *
-     * @throws RuntimeException kalau produk tidak ketemu atau transaksi bukan draft
-     */
-    public function handle(OutboundTransaction $transaction, string $code, int $quantity = 1): array
+    private const BARCODE_SKU_QTY_PATTERN = '/^(.+?)\*(\d+)$/';
+
+    public function handle(OutboundTransaction $transaction, string $code): array
     {
         if (!$transaction->isDraft()) {
             throw new RuntimeException('Transaksi sudah selesai / dibatalkan, tidak bisa tambah item lagi.');
         }
 
         $cleanCode = str_replace(' ', '', $code);
-        $product = Product::query()
-            ->where('code', $code)
-            ->orWhereRaw("REPLACE(code, ' ', '') = ?", [$cleanCode])
-            ->first();
+
+        if (preg_match(self::BARCODE_SKU_QTY_PATTERN, $cleanCode, $matches)) {
+            return $this->applyScan($transaction, $matches[1], max(1, (int) $matches[2]), $cleanCode);
+        }
+
+        return $this->applyScan($transaction, $cleanCode, 1, $code);
+    }
+
+    private function applyScan(OutboundTransaction $transaction, string $sku, int $qtyToAdd, string $originalCode): array
+    {
+        $product = $this->findProductBySku($sku) ?? Product::where('code', $originalCode)->first();
         if (!$product) {
-            throw new RuntimeException("Produk dengan kode \"{$code}\" tidak ditemukan.");
+            throw new RuntimeException("Kode \"{$originalCode}\" tidak ditemukan.");
         }
 
         $item = $transaction->items()->firstOrNew(['product_id' => $product->id]);
         $isNew = !$item->exists;
 
         if ($isNew) {
-            $item->quantity = $quantity;
+            $item->quantity = $qtyToAdd;
             $item->scanned_at = now();
         } else {
-            $item->quantity += $quantity;
+            $item->quantity += $qtyToAdd;
         }
         $item->save();
 
         $transaction->recalculateTotalQty();
 
-        return [$item->fresh(['product']), $isNew, $product];
+        return [
+            'item' => $item->fresh(['product']),
+            'isNew' => $isNew,
+            'product' => $product,
+            'qtyAdded' => $qtyToAdd,
+        ];
+    }
+
+    private function findProductBySku(string $sku): ?Product
+    {
+        return Product::query()
+            ->where('code', $sku)
+            ->orWhereRaw("REPLACE(code, ' ', '') = ?", [$sku])
+            ->first();
     }
 }

@@ -7,41 +7,35 @@ use Illuminate\Support\Collection;
 
 class BuildPrintBarcodeJs
 {
+    private const BARCODE_QTY_DELIMITER = '*';
+
+    private const MAX_LABELS_PER_BATCH = 200;
+
+    private const BARCODE_WIDTH_THRESHOLD = 10;
+
+    private const BARCODE_WIDTH_FACTOR_COMPACT = 2;
+
+    private const BARCODE_WIDTH_FACTOR_WIDE = 3;
+
+    private const BARCODE_HEIGHT = 70;
+
+    private const NIE_FALLBACK = '21302420095';
+
+    private const EXPIRY_FALLBACK = '2026 06';
+
     public function __construct(
         private GenerateBarcode $barcode,
         private FormatProductNameForPrint $formatName,
     ) {}
 
-    /**
-     * Build JS that opens a hidden iframe and triggers print for the given product IDs.
-     * Called from Filament ->action() closures — keeps user on the current page.
-     *
-     * @param array<int>|Collection<int> $productIds
-     */
-    public function handle(array|Collection $printItems, ?string $customSequence = null, ?int $customQuantity = null): string
-    {
-        $itemsMap = [];
-        $ids = [];
-
-        foreach ($printItems as $item) {
-            if (is_array($item) && isset($item['product_id'])) {
-                $pid = (int) $item['product_id'];
-                $ids[] = $pid;
-                $itemsMap[$pid] = [
-                    'sequence' => $item['sequence'] ?? $customSequence,
-                    'quantity' => isset($item['quantity']) ? (int) $item['quantity'] : $customQuantity,
-                ];
-            } else {
-                $pid = (int) $item;
-                $ids[] = $pid;
-                $itemsMap[$pid] = [
-                    'sequence' => $customSequence,
-                    'quantity' => $customQuantity,
-                ];
-            }
-        }
-
-        $ids = collect($ids)->unique()->take(200)->all();
+    public function handle(
+        array|Collection $printItems,
+        ?string $customSequence = null,
+        ?int $customDuplicateCount = null,
+        ?int $customQuantityPerLabel = null,
+    ): string {
+        $itemsMap = $this->normalizeItems($printItems, $customSequence, $customDuplicateCount, $customQuantityPerLabel);
+        $ids = array_slice(array_keys($itemsMap), 0, self::MAX_LABELS_PER_BATCH);
 
         if (empty($ids)) {
             return "alert('Tidak ada produk untuk dicetak');";
@@ -53,64 +47,112 @@ class BuildPrintBarcodeJs
             ->orderByRaw('FIELD(id,' . implode(',', array_map('intval', $ids)) . ')')
             ->get();
 
-        $labels = [];
-
-        foreach ($products as $p) {
-            $config = $itemsMap[$p->id] ?? [];
-            
-            $itemSeq = !empty($config['sequence']) ? $config['sequence'] : $customSequence;
-            
-            if (!empty($itemSeq)) {
-                app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->recordPrintActivity($itemSeq);
-            } else {
-                $todaySeq = app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->getTodaySequenceString();
-                app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->recordPrintActivity($todaySeq);
-            }
-
-            $itemLot = app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->handle($p, $itemSeq);
-            
-            $itemQty = (isset($config['quantity']) && $config['quantity'] > 0) 
-                ? $config['quantity'] 
-                : (($customQuantity !== null && $customQuantity > 0) ? $customQuantity : 1);
-
-            $formattedName = $this->formatName->handle($p->name);
-
-            $rawNie = $p->registration?->nie_number ?? '21302420095';
-            $cleanNie = trim(preg_replace('/AKD\s*/i', '', $rawNie));
-
-            $barcodeData = str_replace(' ', '', $p->code);
-            $wFactor = strlen($barcodeData) > 8 ? 2 : 3;
-            $rawSvg = $this->barcode->svg($barcodeData, widthFactor: $wFactor, height: 70);
-            $svg = str_replace('<svg ', '<svg preserveAspectRatio="none" ', $rawSvg);
-
-            for ($i = 0; $i < $itemQty; $i++) {
-                $labels[] = [
-                    'code' => $p->code,
-                    'name' => $formattedName,
-                    'specification' => $p->specification ?? '',
-                    'nie_number' => $cleanNie,
-                    'lot' => $itemLot,
-                    'quantity' => $p->default_quantity ?? 1,
-                    'expired_at' => $p->registration?->expired_at ? $p->registration->expired_at->format('Y m') : '2026 06',
-                    'year_month' => now()->format('Y m'),
-                    'svg' => $svg,
-                ];
-            }
-        }
+        $labels = $this->renderLabels($products, $itemsMap);
 
         if (empty($labels)) {
             return "alert('Tidak ada produk untuk dicetak');";
         }
 
-        $symbolsPath = public_path('assets/images/btw_symbols_block.png');
-        $symbolsBase64 = '';
-        if (file_exists($symbolsPath)) {
-            $symbolsBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($symbolsPath));
+        $html = view('partials.print-barcode-labels', [
+            'labels' => $labels,
+            'symbols' => $this->loadSymbolsBase64(),
+        ])->render();
+
+        return $this->buildIframeScript(base64_encode($html));
+    }
+
+    private function normalizeItems(
+        array|Collection $printItems,
+        ?string $customSequence,
+        ?int $customDuplicateCount,
+        ?int $customQuantityPerLabel,
+    ): array {
+        $map = [];
+        foreach ($printItems as $item) {
+            $isArray = is_array($item) && isset($item['product_id']);
+            $pid = (int) ($isArray ? $item['product_id'] : $item);
+            $map[$pid] = [
+                'sequence' => $isArray ? ($item['sequence'] ?? $customSequence) : $customSequence,
+                'duplicate_count' => $isArray
+                    ? (int) ($item['duplicate_count'] ?? $item['quantity'] ?? $customDuplicateCount ?? 0)
+                    : (int) ($customDuplicateCount ?? 0),
+                'quantity_per_label' => $isArray
+                    ? (int) ($item['quantity_per_label'] ?? $customQuantityPerLabel ?? 0)
+                    : (int) ($customQuantityPerLabel ?? 0),
+            ];
         }
 
-        $html = view('partials.print-barcode-labels', ['labels' => $labels, 'symbols' => $symbolsBase64])->render();
-        $encoded = base64_encode($html);
+        return $map;
+    }
 
+    private function renderLabels(Collection $products, array $itemsMap): array
+    {
+        $labels = [];
+        $now = now();
+        $lotGen = app(GenerateDynamicLot::class);
+
+        foreach ($products as $p) {
+            $config = $itemsMap[$p->id] ?? [];
+            $sequence = $this->resolveSequence($config['sequence'] ?? null, $lotGen);
+            $lot = $lotGen->handle($p, $sequence);
+            $duplicateCount = max(1, (int) ($config['duplicate_count'] ?? 0));
+            $qtyPerLabel = max(1, (int) ($config['quantity_per_label'] ?? 0) ?: (int) ($p->default_quantity ?? 1));
+
+            $barcodeData = str_replace(' ', '', $p->code) . self::BARCODE_QTY_DELIMITER . $qtyPerLabel;
+            $svg = $this->renderBarcodeSvg($barcodeData);
+            $formattedName = $this->formatName->handle($p->name);
+            $cleanNie = trim(preg_replace('/AKD\s*/i', '', $p->registration?->nie_number ?? self::NIE_FALLBACK));
+
+            $row = [
+                'code' => $p->code,
+                'name' => $formattedName,
+                'specification' => $p->specification ?? '',
+                'nie_number' => $cleanNie,
+                'lot' => $lot,
+                'quantity' => $qtyPerLabel,
+                'expired_at' => $p->registration?->expired_at?->format('Y m') ?? self::EXPIRY_FALLBACK,
+                'year_month' => $now->format('Y m'),
+                'svg' => $svg,
+            ];
+
+            for ($i = 0; $i < $duplicateCount; $i++) {
+                $labels[] = $row;
+            }
+        }
+
+        return $labels;
+    }
+
+    private function resolveSequence(?string $customSequence, GenerateDynamicLot $lotGen): string
+    {
+        $sequence = !empty($customSequence) ? $customSequence : $lotGen->getTodaySequenceString();
+        $lotGen->recordPrintActivity($sequence);
+
+        return $sequence;
+    }
+
+    private function renderBarcodeSvg(string $data): string
+    {
+        $widthFactor = strlen($data) > self::BARCODE_WIDTH_THRESHOLD
+            ? self::BARCODE_WIDTH_FACTOR_COMPACT
+            : self::BARCODE_WIDTH_FACTOR_WIDE;
+
+        $svg = $this->barcode->svg($data, widthFactor: $widthFactor, height: self::BARCODE_HEIGHT);
+
+        return str_replace('<svg ', '<svg preserveAspectRatio="none" ', $svg);
+    }
+
+    private function loadSymbolsBase64(): string
+    {
+        $path = public_path('assets/images/btw_symbols_block.png');
+
+        return file_exists($path)
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents($path))
+            : '';
+    }
+
+    private function buildIframeScript(string $encodedHtml): string
+    {
         return <<<JS
         (() => {
             const existing = document.getElementById('__print_barcode_iframe__');
@@ -120,7 +162,7 @@ class BuildPrintBarcodeJs
             iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:90mm;height:50mm;border:0;visibility:hidden;';
             document.body.appendChild(iframe);
             const doc = iframe.contentDocument || iframe.contentWindow.document;
-            const bytes = Uint8Array.from(atob('{$encoded}'), c => c.charCodeAt(0));
+            const bytes = Uint8Array.from(atob('{$encodedHtml}'), c => c.charCodeAt(0));
             const html = new TextDecoder('utf-8').decode(bytes);
             doc.open();
             doc.write(html);
