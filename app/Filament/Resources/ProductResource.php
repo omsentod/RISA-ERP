@@ -43,7 +43,6 @@ class ProductResource extends Resource
                             ->label('Kode SKU')
                             ->placeholder('Contoh: OF 1010 04')
                             ->required()
-                            ->unique(ignoreRecord: true)
                             ->maxLength(100),
                         Forms\Components\TextInput::make('name')
                             ->label('Nama Produk')

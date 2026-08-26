@@ -13,17 +13,16 @@ class ApplyProductImport
 {
     /**
      * @param array<int, ProductImportRow> $rows
-     * @param string $duplicateStrategy one of: overwrite, skip
-     * @return array{inserted:int, updated:int, skipped:int, invalid:int}
+     * @param string $duplicateStrategy one of: create_new, skip
+     * @return array{inserted:int, skipped:int, invalid:int}
      */
     public function handle(array $rows, string $duplicateStrategy): array
     {
         $inserted = 0;
-        $updated = 0;
         $skipped = 0;
         $invalid = 0;
 
-        DB::transaction(function () use ($rows, $duplicateStrategy, &$inserted, &$updated, &$skipped, &$invalid) {
+        DB::transaction(function () use ($rows, $duplicateStrategy, &$inserted, &$skipped, &$invalid) {
             $categoryCache = [];
             $registrationCache = [];
 
@@ -56,26 +55,20 @@ class ApplyProductImport
                     )->id;
                 }
 
-                $product = Product::updateOrCreate(
-                    ['code' => $row->code],
-                    [
-                        'product_category_id' => $categoryId,
-                        'registration_id' => $registrationId,
-                        'name' => $row->name,
-                        'specification' => $row->specification,
-                        'default_quantity' => $row->defaultQuantity > 0 ? $row->defaultQuantity : 1,
-                        'product_group_code' => $row->productGroupCode,
-                    ]
-                );
+                Product::create([
+                    'code' => $row->code,
+                    'product_category_id' => $categoryId,
+                    'registration_id' => $registrationId,
+                    'name' => $row->name,
+                    'specification' => $row->specification,
+                    'default_quantity' => $row->defaultQuantity > 0 ? $row->defaultQuantity : 1,
+                    'product_group_code' => $row->productGroupCode,
+                ]);
 
-                if ($product->wasRecentlyCreated) {
-                    $inserted++;
-                } else {
-                    $updated++;
-                }
+                $inserted++;
             }
         });
 
-        return compact('inserted', 'updated', 'skipped', 'invalid');
+        return compact('inserted', 'skipped', 'invalid');
     }
 }

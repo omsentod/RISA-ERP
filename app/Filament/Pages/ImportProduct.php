@@ -130,9 +130,8 @@ class ImportProduct extends Page implements HasForms
         Notification::make()
             ->title('Import selesai')
             ->body(sprintf(
-                '%d ditambah, %d di-update, %d di-skip, %d invalid',
+                '%d ditambah, %d di-skip, %d invalid',
                 $summary['inserted'],
-                $summary['updated'],
                 $summary['skipped'],
                 $summary['invalid']
             ))

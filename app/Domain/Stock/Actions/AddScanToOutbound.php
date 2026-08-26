@@ -3,7 +3,9 @@
 namespace App\Domain\Stock\Actions;
 
 use App\Domain\Product\Models\Product;
+use App\Domain\Stock\Exceptions\AmbiguousScanException;
 use App\Domain\Stock\Models\OutboundTransaction;
+use Illuminate\Support\Collection;
 use RuntimeException;
 
 class AddScanToOutbound
@@ -25,11 +27,10 @@ class AddScanToOutbound
         return $this->applyScan($transaction, $cleanCode, 1, $code);
     }
 
-    private function applyScan(OutboundTransaction $transaction, string $sku, int $qtyToAdd, string $originalCode): array
+    public function addProduct(OutboundTransaction $transaction, Product $product, int $qtyToAdd): array
     {
-        $product = $this->findProductBySku($sku) ?? Product::where('code', $originalCode)->first();
-        if (!$product) {
-            throw new RuntimeException("Kode \"{$originalCode}\" tidak ditemukan.");
+        if (!$transaction->isDraft()) {
+            throw new RuntimeException('Transaksi sudah selesai / dibatalkan, tidak bisa tambah item lagi.');
         }
 
         $item = $transaction->items()->firstOrNew(['product_id' => $product->id]);
@@ -53,11 +54,30 @@ class AddScanToOutbound
         ];
     }
 
-    private function findProductBySku(string $sku): ?Product
+    private function applyScan(OutboundTransaction $transaction, string $sku, int $qtyToAdd, string $originalCode): array
+    {
+        $matches = $this->findProductsBySku($sku, $originalCode);
+
+        if ($matches->isEmpty()) {
+            throw new RuntimeException("Kode \"{$originalCode}\" tidak ditemukan.");
+        }
+
+        if ($matches->count() > 1) {
+            throw new AmbiguousScanException($matches, $originalCode, $qtyToAdd);
+        }
+
+        return $this->addProduct($transaction, $matches->first(), $qtyToAdd);
+    }
+
+    /**
+     * @return Collection<int, Product>
+     */
+    private function findProductsBySku(string $sku, string $originalCode): Collection
     {
         return Product::query()
-            ->where('code', $sku)
+            ->where('code', $originalCode)
+            ->orWhere('code', $sku)
             ->orWhereRaw("REPLACE(code, ' ', '') = ?", [$sku])
-            ->first();
+            ->get();
     }
 }

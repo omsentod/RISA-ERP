@@ -4,6 +4,7 @@ namespace Tests\Feature\Domain\Stock\Actions;
 
 use App\Domain\Product\Models\Product;
 use App\Domain\Stock\Actions\AddScanToOutbound;
+use App\Domain\Stock\Exceptions\AmbiguousScanException;
 use App\Domain\Stock\Models\OutboundTransaction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
@@ -28,12 +29,12 @@ class AddScanToOutboundTest extends TestCase
         $product = Product::factory()->create(['code' => 'OF 1010 04']);
         $tx = $this->makeDraft();
 
-        [$item, $isNew] = app(AddScanToOutbound::class)->handle($tx, 'OF 1010 04');
+        $result = app(AddScanToOutbound::class)->handle($tx, 'OF 1010 04');
 
-        $this->assertTrue($isNew);
-        $this->assertSame($product->id, $item->product_id);
-        $this->assertSame(1, $item->quantity);
-        $this->assertNotNull($item->scanned_at);
+        $this->assertTrue($result['isNew']);
+        $this->assertSame($product->id, $result['item']->product_id);
+        $this->assertSame(1, $result['item']->quantity);
+        $this->assertNotNull($result['item']->scanned_at);
         $this->assertDatabaseCount('outbound_transaction_items', 1);
     }
 
@@ -43,21 +44,21 @@ class AddScanToOutboundTest extends TestCase
         $tx = $this->makeDraft();
 
         app(AddScanToOutbound::class)->handle($tx, 'OF 1010 04');
-        [$item, $isNew] = app(AddScanToOutbound::class)->handle($tx, 'OF 1010 04');
+        $result = app(AddScanToOutbound::class)->handle($tx, 'OF 1010 04');
 
-        $this->assertFalse($isNew);
-        $this->assertSame(2, $item->quantity);
+        $this->assertFalse($result['isNew']);
+        $this->assertSame(2, $result['item']->quantity);
         $this->assertDatabaseCount('outbound_transaction_items', 1);
     }
 
-    public function test_respects_custom_quantity_argument(): void
+    public function test_reads_quantity_from_barcode_pattern(): void
     {
         Product::factory()->create(['code' => 'OF 1010 04']);
         $tx = $this->makeDraft();
 
-        [$item] = app(AddScanToOutbound::class)->handle($tx, 'OF 1010 04', 5);
+        $result = app(AddScanToOutbound::class)->handle($tx, 'OF 1010 04*5');
 
-        $this->assertSame(5, $item->quantity);
+        $this->assertSame(5, $result['item']->quantity);
     }
 
     public function test_recalculates_total_qty_across_all_items(): void
@@ -68,7 +69,7 @@ class AddScanToOutboundTest extends TestCase
 
         app(AddScanToOutbound::class)->handle($tx, 'OF 1010 04');
         app(AddScanToOutbound::class)->handle($tx, 'OF 1010 04');
-        app(AddScanToOutbound::class)->handle($tx, 'OF 5131 25', 3);
+        app(AddScanToOutbound::class)->handle($tx, 'OF 5131 25*3');
 
         $tx->refresh();
         $this->assertSame(5, $tx->total_qty);
@@ -79,7 +80,7 @@ class AddScanToOutboundTest extends TestCase
         $tx = $this->makeDraft();
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Produk dengan kode "TIDAK-ADA" tidak ditemukan.');
+        $this->expectExceptionMessage('Kode "TIDAK-ADA" tidak ditemukan.');
 
         app(AddScanToOutbound::class)->handle($tx, 'TIDAK-ADA');
     }
@@ -94,5 +95,35 @@ class AddScanToOutboundTest extends TestCase
         $this->expectExceptionMessage('Transaksi sudah selesai / dibatalkan, tidak bisa tambah item lagi.');
 
         app(AddScanToOutbound::class)->handle($tx, 'OF 1010 04');
+    }
+
+    public function test_throws_ambiguous_when_code_owned_by_multiple_products(): void
+    {
+        Product::factory()->create(['code' => 'DUP 001', 'name' => 'Produk A']);
+        Product::factory()->create(['code' => 'DUP 001', 'name' => 'Produk B']);
+        $tx = $this->makeDraft();
+
+        try {
+            app(AddScanToOutbound::class)->handle($tx, 'DUP 001*4');
+            $this->fail('AmbiguousScanException was not thrown.');
+        } catch (AmbiguousScanException $e) {
+            $this->assertCount(2, $e->candidates);
+            $this->assertSame(4, $e->qtyToAdd);
+            $this->assertDatabaseCount('outbound_transaction_items', 0);
+        }
+    }
+
+    public function test_add_product_adds_specific_product_chosen_from_candidates(): void
+    {
+        Product::factory()->create(['code' => 'DUP 001', 'name' => 'Produk A']);
+        $chosen = Product::factory()->create(['code' => 'DUP 001', 'name' => 'Produk B']);
+        $tx = $this->makeDraft();
+
+        $result = app(AddScanToOutbound::class)->addProduct($tx, $chosen, 4);
+
+        $this->assertTrue($result['isNew']);
+        $this->assertSame($chosen->id, $result['item']->product_id);
+        $this->assertSame(4, $result['item']->quantity);
+        $this->assertDatabaseCount('outbound_transaction_items', 1);
     }
 }

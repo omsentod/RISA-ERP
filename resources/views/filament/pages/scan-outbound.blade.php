@@ -119,4 +119,28 @@
             Selesai — Simpan Surat Jalan
         </x-filament::button>
     </div>
+
+    {{-- PICKER MODAL: kode dimiliki > 1 produk --}}
+    <x-filament::modal id="pick-product" width="2xl">
+        <x-slot name="heading">Kode "{{ $pickerCode }}" dimiliki beberapa produk</x-slot>
+        <x-slot name="description">Pilih produk yang benar untuk ditambahkan ({{ $pickerQty }} pcs).</x-slot>
+
+        <div class="flex flex-col gap-2">
+            @foreach ($pickerCandidates as $candidate)
+                <button type="button"
+                    wire:click="pickProduct({{ $candidate['id'] }})"
+                    class="flex flex-col items-start gap-0.5 p-3 text-left border rounded-lg border-gray-200 dark:border-gray-700 hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10">
+                    <span class="font-mono font-medium text-sm">{{ $candidate['code'] }}</span>
+                    <span class="text-sm text-gray-700 dark:text-gray-300">{{ $candidate['name'] }}</span>
+                    @if (!empty($candidate['specification']))
+                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ $candidate['specification'] }}</span>
+                    @endif
+                </button>
+            @endforeach
+        </div>
+
+        <x-slot name="footerActions">
+            <x-filament::button color="gray" wire:click="closePicker">Batal</x-filament::button>
+        </x-slot>
+    </x-filament::modal>
 </x-filament-panels::page>

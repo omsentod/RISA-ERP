@@ -52,7 +52,7 @@
             <x-filament::section>
                 <div class="text-sm text-gray-500 dark:text-gray-400">Duplikat (Kode sudah ada)</div>
                 <div class="text-3xl font-bold text-warning-600 dark:text-warning-400">{{ $stats['duplicate'] }}</div>
-                <div class="text-xs text-gray-500 mt-1">Perlu keputusan: overwrite / skip</div>
+                <div class="text-xs text-gray-500 mt-1">Perlu keputusan: buat baru / skip</div>
             </x-filament::section>
             <x-filament::section>
                 <div class="text-sm text-gray-500 dark:text-gray-400">Baris Invalid</div>
@@ -79,11 +79,11 @@
                         </div>
                     </label>
                     <label class="flex items-start gap-2 p-3 border rounded-md cursor-pointer flex-1 dark:border-gray-700"
-                           :class="'{{ $duplicateStrategy }}' === 'overwrite' ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10' : ''">
-                        <input type="radio" wire:model.live="duplicateStrategy" value="overwrite" class="mt-1">
+                           :class="'{{ $duplicateStrategy }}' === 'create_new' ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10' : ''">
+                        <input type="radio" wire:model.live="duplicateStrategy" value="create_new" class="mt-1">
                         <div>
-                            <div class="font-medium">Overwrite duplikat</div>
-                            <div class="text-xs text-gray-500">Timpa data existing dengan yang di file. Hati-hati — data lama hilang.</div>
+                            <div class="font-medium">Buat produk baru</div>
+                            <div class="text-xs text-gray-500">Tetap tambahkan sebagai produk baru walau Kode sudah ada. Data existing tidak diubah.</div>
                         </div>
                     </label>
                 </div>
@@ -168,7 +168,7 @@
                 wire:confirm="Yakin apply import? Perubahan tidak bisa di-undo otomatis."
                 icon="heroicon-o-check"
                 color="success">
-                Konfirmasi Import ({{ $stats['new'] }} baru, {{ $duplicateStrategy === 'overwrite' ? $stats['duplicate'].' overwrite' : $stats['duplicate'].' skip' }})
+                Konfirmasi Import ({{ $stats['new'] }} baru, {{ $duplicateStrategy === 'create_new' ? $stats['duplicate'].' buat baru' : $stats['duplicate'].' skip' }})
             </x-filament::button>
             <x-filament::button wire:click="resetImport" color="gray" icon="heroicon-o-x-mark">
                 Batal / Upload Ulang
@@ -180,14 +180,10 @@
     @if ($step === 'done' && $result)
         <x-filament::section>
             <x-slot name="heading">Import Selesai</x-slot>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <div class="p-3 rounded bg-success-50 dark:bg-success-500/10">
                     <div class="text-xs text-gray-500">Ditambah</div>
                     <div class="text-2xl font-bold text-success-600 dark:text-success-400">{{ $result['inserted'] }}</div>
-                </div>
-                <div class="p-3 rounded bg-info-50 dark:bg-info-500/10">
-                    <div class="text-xs text-gray-500">Di-update</div>
-                    <div class="text-2xl font-bold text-info-600 dark:text-info-400">{{ $result['updated'] }}</div>
                 </div>
                 <div class="p-3 rounded bg-gray-100 dark:bg-gray-800">
                     <div class="text-xs text-gray-500">Di-skip</div>

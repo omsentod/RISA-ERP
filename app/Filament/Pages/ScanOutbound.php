@@ -30,6 +30,12 @@ class ScanOutbound extends Page
 
     public string $notes = '';
 
+    public array $pickerCandidates = [];
+
+    public int $pickerQty = 1;
+
+    public ?string $pickerCode = null;
+
     public function mount(OutboundTransaction $transaction): void
     {
         $this->transaction = $transaction->load(['items.product']);
@@ -60,12 +66,67 @@ class ScanOutbound extends Page
 
         try {
             $result = app(AddScanToOutbound::class)->handle($this->transaction, $code);
+        } catch (AmbiguousScanException $e) {
+            $this->openPicker($e);
+
+            return;
         } catch (\Throwable $e) {
             Notification::make()->title('Scan gagal')->body($e->getMessage())->danger()->send();
 
             return;
         }
 
+        $this->notifyScanResult($result);
+    }
+
+    public function pickProduct(int $productId): void
+    {
+        if (!in_array($productId, array_column($this->pickerCandidates, 'id'), true)) {
+            return;
+        }
+
+        $product = Product::find($productId);
+        if (!$product) {
+            return;
+        }
+
+        try {
+            $result = app(AddScanToOutbound::class)->addProduct($this->transaction, $product, $this->pickerQty);
+        } catch (\Throwable $e) {
+            Notification::make()->title('Gagal menambah item')->body($e->getMessage())->danger()->send();
+
+            return;
+        }
+
+        $this->closePicker();
+        $this->notifyScanResult($result);
+    }
+
+    public function closePicker(): void
+    {
+        $this->pickerCandidates = [];
+        $this->pickerCode = null;
+        $this->pickerQty = 1;
+        $this->dispatch('close-modal', id: 'pick-product');
+    }
+
+    private function openPicker(AmbiguousScanException $e): void
+    {
+        $this->pickerCode = $e->scannedCode;
+        $this->pickerQty = $e->qtyToAdd;
+        $this->pickerCandidates = $e->candidates
+            ->map(fn (Product $p) => [
+                'id' => $p->id,
+                'code' => $p->code,
+                'name' => $p->name,
+                'specification' => $p->specification,
+            ])
+            ->all();
+        $this->dispatch('open-modal', id: 'pick-product');
+    }
+
+    private function notifyScanResult(array $result): void
+    {
         $this->refreshTransaction();
 
         ['item' => $item, 'isNew' => $isNew, 'qtyAdded' => $qtyAdded] = $result;
