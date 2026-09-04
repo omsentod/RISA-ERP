@@ -155,29 +155,31 @@ class BuildPrintBarcodeJs
     {
         return <<<JS
         (() => {
-            const existing = document.getElementById('__print_barcode_iframe__');
-            if (existing) existing.remove();
-            const iframe = document.createElement('iframe');
-            iframe.id = '__print_barcode_iframe__';
-            iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:90mm;height:50mm;border:0;visibility:hidden;';
-            document.body.appendChild(iframe);
-            const doc = iframe.contentDocument || iframe.contentWindow.document;
             const bytes = Uint8Array.from(atob('{$encodedHtml}'), c => c.charCodeAt(0));
             const html = new TextDecoder('utf-8').decode(bytes);
-            doc.open();
-            doc.write(html);
-            doc.close();
-            const doPrint = () => {
-                try {
-                    iframe.contentWindow.focus();
-                    iframe.contentWindow.print();
-                } catch (e) { console.error('Print failed', e); }
-                setTimeout(() => iframe.remove(), 3000);
-            };
-            if (iframe.contentDocument.readyState === 'complete') {
-                setTimeout(doPrint, 150);
+            
+            // Tambahkan tombol print mengambang
+            const printBtnHtml = `
+                <div class="no-print" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
+                    <button onclick="window.print()" style="padding: 15px 25px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 16px;">
+                        🖨️ CETAK SEKARANG
+                    </button>
+                </div>
+            `;
+            const finalHtml = html.replace('</body>', printBtnHtml + '</body>');
+
+            const printWindow = window.open('', '_blank');
+            if (printWindow) {
+                printWindow.document.open();
+                printWindow.document.write(finalHtml);
+                printWindow.document.close();
+                
+                // Beri waktu sebentar agar font dan gambar termuat
+                setTimeout(() => {
+                    printWindow.focus();
+                }, 200);
             } else {
-                iframe.onload = () => setTimeout(doPrint, 150);
+                alert('Pop-up diblokir oleh browser. Tolong izinkan pop-ups untuk membuka halaman cetak.');
             }
         })();
         JS;
