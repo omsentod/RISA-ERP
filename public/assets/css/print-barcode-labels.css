@@ -11,13 +11,18 @@
 
 html,
 body {
-    width: 90mm;
+    width: 100%;
     height: auto;
     font-family: Arial, Helvetica, sans-serif;
     color: #000;
-    background: #fff;
+    background: #e5e7eb; /* Warna latar belakang abu-abu untuk layar */
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0;
+    gap: 15px;
 }
 
 /* Base sheet wrapper for page-break handling */
@@ -29,8 +34,10 @@ body {
     break-after: page;
     page-break-inside: avoid;
     break-inside: avoid;
-    overflow: hidden;
+    overflow: visible;
     box-sizing: border-box;
+    background: #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15); /* Bayangan seperti kertas asli */
 }
 
 .sheet:last-child {
@@ -47,8 +54,10 @@ body {
     justify-content: space-between;
     align-items: stretch;
     background: #fff;
-    overflow: hidden;
+    overflow: visible;
     box-sizing: border-box;
+    outline: 2px dashed #000001; /* Garis bantu abu-abu yang lebih tebal dan jelas */
+    outline-offset: -3px; /* Garis bantu agak ke dalam */
 }
 
 /* Utility for vertical text flowing top to bottom */
@@ -85,7 +94,7 @@ body {
     text-align: left;
     width: 16mm;
     max-height: 30mm;
-    overflow: hidden;
+    overflow: visible;
     white-space: normal;
     word-break: break-word;
 }
@@ -266,8 +275,90 @@ body {
 
 }
 
+/* --- Interactive Elements (Draggable, Resizable, Editable) --- */
+.draggable-title {
+    cursor: move;
+    position: relative;
+    user-select: none;
+    border: 1px dashed #ccc; /* Garis bantu untuk blok judul */
+    background: rgba(240, 248, 255, 0.3); /* Sedikit warna untuk penanda */
+}
+.draggable-title.dragging {
+    opacity: 0.8;
+}
+
+.title-controls {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: row;
+    gap: 3px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #999;
+    border-radius: 4px;
+    padding: 2px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 10;
+    writing-mode: horizontal-tb; /* Force horizontal for buttons */
+}
+.draggable-title:hover .title-controls {
+    opacity: 1;
+}
+
+.btn-resize {
+    cursor: pointer;
+    background: #eee;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    color: #333;
+    line-height: 1;
+    font-family: monospace;
+}
+.btn-resize:hover {
+    background: #ddd;
+}
+
+.editable-field {
+    border: 1px dashed transparent;
+    padding: 0 1px;
+    transition: all 0.2s;
+    cursor: text;
+    border-radius: 2px;
+}
+.editable-field:hover, .editable-field:focus {
+    border-color: #666;
+    outline: none;
+    background-color: #f0f0f0;
+}
+
 /* Thermal Printer (@media print) Optimizations for Argox / Thermal Roll Printers */
 @media print {
+    .no-print {
+        display: none !important;
+    }
+    .editable-field {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+    }
+    .label {
+        outline: none !important;
+    }
+    .draggable-title {
+        border: none !important;
+        background: transparent !important;
+    }
+
     @page {
         size: 90mm 50mm;
         margin: 0 !important;
@@ -281,6 +372,8 @@ body {
         overflow: visible !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        background: #fff !important;
+        display: block !important;
     }
 
     .sheet {
@@ -296,6 +389,8 @@ body {
         break-inside: avoid !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
+        box-shadow: none !important;
+        margin: 0 !important;
     }
 
     .label {
@@ -306,6 +401,7 @@ body {
         justify-content: space-between !important;
         align-items: stretch !important;
         box-sizing: border-box !important;
+        overflow: hidden !important;
     }
 
     .group-1, .group-2, .group-3, .group-4, .group-mat, .group-5 {
