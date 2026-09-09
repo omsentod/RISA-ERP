@@ -2,7 +2,9 @@
 
 namespace App\Filament\Pages;
 
+use App\Domain\Product\Models\Product;
 use App\Domain\Stock\Actions\AddScanToOutbound;
+use App\Domain\Stock\Exceptions\AmbiguousScanException;
 use App\Domain\Stock\Models\OutboundTransaction;
 use App\Domain\Stock\Models\OutboundTransactionItem;
 use App\Filament\Resources\OutboundTransactionResource;
