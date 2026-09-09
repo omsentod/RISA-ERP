@@ -87,6 +87,8 @@ table.ncr-table {
 table.ncr-table th,
 table.ncr-table td {
     border: 1px solid #000;
+    border-left-width: 2px;
+    border-right-width: 2px;
     padding: 1.6mm 2mm;
     vertical-align: middle;
 }
@@ -97,6 +99,7 @@ table.ncr-table th {
     background: #fff;
     font-size: 11.5pt;
     padding: 1.8mm 2mm;
+    border-width: 2px;
 }
 
 /* COLUMN WIDTHS & ALIGNMENT */
@@ -195,7 +198,7 @@ table.ncr-table td.total-value {
     }
 
     html, body {
-        width: 215mm !important;
+        width: auto !important;
         margin: 0 !important;
         padding: 0 !important;
     }
