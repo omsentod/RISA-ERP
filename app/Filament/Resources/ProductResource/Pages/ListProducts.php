@@ -102,10 +102,10 @@ class ListProducts extends ListRecords
                 Actions\Action::make('printAllFiltered')
                     ->label('Cetak Semua')
                     ->icon('heroicon-o-printer')
-                    ->requiresConfirmation()
                     ->modalHeading('Cetak Label untuk Semua Produk yang Sedang Difilter')
                     ->modalDescription('Akan trigger pop-up cetak untuk semua produk yang sesuai filter/pencarian saat ini. Maksimum 200 produk per batch.')
-                    ->action(function () {
+                    ->form(ProductResource::lotPeriodFields())
+                    ->action(function (array $data) {
                         $ids = $this->getFilteredTableQuery()->limit(200)->pluck('id')->all();
                         if (empty($ids)) {
                             Notification::make()->title('Tidak ada produk untuk dicetak')->warning()->send();
@@ -113,7 +113,7 @@ class ListProducts extends ListRecords
                             return;
                         }
 
-                        $this->js(app(BuildPrintBarcodeJs::class)->handle($ids));
+                        $this->js(app(BuildPrintBarcodeJs::class)->handle($ids, null, null, null, ProductResource::resolveLotPeriod($data)));
                     }),
             ])
                 ->label('Lainnya')

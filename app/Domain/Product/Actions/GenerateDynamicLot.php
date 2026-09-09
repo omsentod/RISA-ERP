@@ -2,8 +2,8 @@
 
 namespace App\Domain\Product\Actions;
 
-use App\Domain\Product\Models\Product;
 use App\Domain\Product\Models\PrintSequence;
+use App\Domain\Product\Models\Product;
 use Carbon\Carbon;
 
 class GenerateDynamicLot
@@ -13,12 +13,11 @@ class GenerateDynamicLot
      * Format: {group_code}{year}{month}{sequence}
      * Example: 122607132
      *
-     * @param Product $product
-     * @return string
+     * @param Carbon|null $date Produksi year-month yang dipakai untuk bagian YY & MM. Default: sekarang.
      */
-    public function handle(Product $product, ?string $customSequence = null): string
+    public function handle(Product $product, ?string $customSequence = null, ?Carbon $date = null): string
     {
-        $now = Carbon::now();
+        $date ??= Carbon::now();
 
         // 1. Group code (strictly 2 digits)
         $rawGroupCode = (string) ($product->product_group_code ?? '00');
@@ -26,10 +25,10 @@ class GenerateDynamicLot
         $groupCode = str_pad(substr($cleanGroupCode, 0, 2), 2, '0', STR_PAD_LEFT);
 
         // 2. Year (2 digits)
-        $year = $now->format('y');
+        $year = $date->format('y');
 
         // 3. Month (2 digits)
-        $month = $now->format('m');
+        $month = $date->format('m');
 
         // 4. Daily Sequence (3 digits)
         if (!empty($customSequence)) {
@@ -88,7 +87,7 @@ class GenerateDynamicLot
     {
         $today = Carbon::today();
         $max = PrintSequence::whereYear('date', $today->year)->max('sequence_number');
-        
+
         // Reset to 1 on a new year or if empty
         if (is_null($max)) {
             return 1;

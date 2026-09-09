@@ -6,6 +6,7 @@ use App\Domain\Product\Actions\BuildPrintBarcodeJs;
 use App\Domain\Product\Actions\GenerateDynamicLot;
 use App\Domain\Product\Models\Product;
 use App\Filament\Resources\ProductResource\Pages;
+use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -178,14 +179,19 @@ class ProductResource extends Resource
                     ->icon('heroicon-o-printer')
                     ->color('gray')
                     ->form([
+                        ...self::lotPeriodFields(),
                         Forms\Components\TextInput::make('sequence')
                             ->label('Kode LOT Hari Ini')
                             ->default(fn () => app(GenerateDynamicLot::class)->getTodaySequenceString())
                             ->maxLength(3)
                             ->numeric()
                             ->required()
-                            ->helperText(function (Product $record) {
-                                $fullLot = app(GenerateDynamicLot::class)->handle($record);
+                            ->helperText(function (Product $record, Forms\Get $get) {
+                                $date = Carbon::createFromFormat('Y-m', self::resolveLotPeriod([
+                                    'lot_year' => $get('lot_year'),
+                                    'lot_month' => $get('lot_month'),
+                                ]))->startOfMonth();
+                                $fullLot = app(GenerateDynamicLot::class)->handle($record, null, $date);
 
                                 return "Nomor LOT otomatis yang akan tercetak: {$fullLot} (Golongan + YY + MM + Urutan).";
                             }),
@@ -210,6 +216,7 @@ class ProductResource extends Resource
                             $data['sequence'],
                             (int) $data['duplicate_count'],
                             (int) $data['quantity_per_label'],
+                            self::resolveLotPeriod($data),
                         ));
                     }),
                 Tables\Actions\ViewAction::make(),
@@ -233,10 +240,13 @@ class ProductResource extends Resource
                         }
                         $form->fill([
                             'sequence' => app(GenerateDynamicLot::class)->getTodaySequenceString(),
+                            'lot_month' => now()->format('m'),
+                            'lot_year' => (string) now()->year,
                             'items' => $items,
                         ]);
                     })
                     ->form([
+                        ...self::lotPeriodFields(),
                         Forms\Components\TextInput::make('sequence')
                             ->label('Kode LOT Hari Ini')
                             ->default(fn () => app(GenerateDynamicLot::class)->getTodaySequenceString())
@@ -279,7 +289,7 @@ class ProductResource extends Resource
                     ->action(function (array $data, $livewire) {
                         $sequence = $data['sequence'] ?? null;
                         $items = $data['items'] ?? [];
-                        $livewire->js(app(BuildPrintBarcodeJs::class)->handle($items, $sequence));
+                        $livewire->js(app(BuildPrintBarcodeJs::class)->handle($items, $sequence, null, null, self::resolveLotPeriod($data)));
                     })
                     ->deselectRecordsAfterCompletion(),
                 Tables\Actions\BulkActionGroup::make([
@@ -289,6 +299,54 @@ class ProductResource extends Resource
                 ]),
             ])
             ->deferLoading();
+    }
+
+    public static function lotPeriodFields(): array
+    {
+        $months = [
+            '01' => '01 — Januari',
+            '02' => '02 — Februari',
+            '03' => '03 — Maret',
+            '04' => '04 — April',
+            '05' => '05 — Mei',
+            '06' => '06 — Juni',
+            '07' => '07 — Juli',
+            '08' => '08 — Agustus',
+            '09' => '09 — September',
+            '10' => '10 — Oktober',
+            '11' => '11 — November',
+            '12' => '12 — Desember',
+        ];
+
+        $currentYear = (int) now()->year;
+        $years = collect(range($currentYear - 2, $currentYear + 1))
+            ->mapWithKeys(fn (int $y) => [(string) $y => (string) $y])
+            ->all();
+
+        return [
+            Forms\Components\Select::make('lot_month')
+                ->label('Bulan Produksi')
+                ->options($months)
+                ->default(now()->format('m'))
+                ->live()
+                ->required()
+                ->helperText('Dipakai untuk MM di nomor LOT dan bulan produksi di label.'),
+            Forms\Components\Select::make('lot_year')
+                ->label('Tahun Produksi')
+                ->options($years)
+                ->default((string) $currentYear)
+                ->live()
+                ->required()
+                ->helperText('Dipakai untuk YY di nomor LOT dan tahun produksi di label.'),
+        ];
+    }
+
+    public static function resolveLotPeriod(array $data): string
+    {
+        $year = (int) ($data['lot_year'] ?? now()->year);
+        $month = (int) ($data['lot_month'] ?? now()->month);
+
+        return sprintf('%04d-%02d', $year, $month);
     }
 
     public static function getEloquentQuery(): Builder

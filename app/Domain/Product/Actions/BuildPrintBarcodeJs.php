@@ -3,6 +3,7 @@
 namespace App\Domain\Product\Actions;
 
 use App\Domain\Product\Models\Product;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class BuildPrintBarcodeJs
@@ -33,6 +34,7 @@ class BuildPrintBarcodeJs
         ?string $customSequence = null,
         ?int $customDuplicateCount = null,
         ?int $customQuantityPerLabel = null,
+        ?string $yearMonth = null,
     ): string {
         $itemsMap = $this->normalizeItems($printItems, $customSequence, $customDuplicateCount, $customQuantityPerLabel);
         $ids = array_slice(array_keys($itemsMap), 0, self::MAX_LABELS_PER_BATCH);
@@ -47,7 +49,7 @@ class BuildPrintBarcodeJs
             ->orderByRaw('FIELD(id,' . implode(',', array_map('intval', $ids)) . ')')
             ->get();
 
-        $labels = $this->renderLabels($products, $itemsMap);
+        $labels = $this->renderLabels($products, $itemsMap, $this->resolvePrintDate($yearMonth));
 
         if (empty($labels)) {
             return "alert('Tidak ada produk untuk dicetak');";
@@ -85,16 +87,24 @@ class BuildPrintBarcodeJs
         return $map;
     }
 
-    private function renderLabels(Collection $products, array $itemsMap): array
+    private function resolvePrintDate(?string $yearMonth): Carbon
+    {
+        if (empty($yearMonth)) {
+            return now();
+        }
+
+        return Carbon::createFromFormat('Y-m', $yearMonth)->startOfMonth();
+    }
+
+    private function renderLabels(Collection $products, array $itemsMap, Carbon $date): array
     {
         $labels = [];
-        $now = now();
         $lotGen = app(GenerateDynamicLot::class);
 
         foreach ($products as $p) {
             $config = $itemsMap[$p->id] ?? [];
             $sequence = $this->resolveSequence($config['sequence'] ?? null, $lotGen);
-            $lot = $lotGen->handle($p, $sequence);
+            $lot = $lotGen->handle($p, $sequence, $date);
             $duplicateCount = max(1, (int) ($config['duplicate_count'] ?? 0));
             $qtyPerLabel = max(1, (int) ($config['quantity_per_label'] ?? 0) ?: (int) ($p->default_quantity ?? 1));
 
@@ -111,7 +121,7 @@ class BuildPrintBarcodeJs
                 'lot' => $lot,
                 'quantity' => $qtyPerLabel,
                 'expired_at' => $p->registration?->expired_at?->format('Y m') ?? self::EXPIRY_FALLBACK,
-                'year_month' => $now->format('Y m'),
+                'year_month' => $date->format('Y m'),
                 'svg' => $svg,
             ];
 
