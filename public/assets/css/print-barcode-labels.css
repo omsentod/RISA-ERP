@@ -76,14 +76,14 @@ body {
     align-items: center;
     height: 100%;
     width: 16mm;
-    gap: 1.5mm;
+    gap: 2px;
     flex-shrink: 0;
 }
 
 /* Empty space reserved for physical pre-printed OSFIX logo on paper */
 .logo-spacer {
     width: 16mm;
-    height: 17mm;
+    height: 13mm;
     flex-shrink: 0;
 }
 
