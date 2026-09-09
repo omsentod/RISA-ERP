@@ -241,7 +241,7 @@ class ProductResource extends Resource
                         $form->fill([
                             'sequence' => app(GenerateDynamicLot::class)->getTodaySequenceString(),
                             'lot_month' => now()->format('m'),
-                            'lot_year' => (string) now()->year,
+                            'lot_year' => (int) now()->year,
                             'items' => $items,
                         ]);
                     })
@@ -318,33 +318,39 @@ class ProductResource extends Resource
             '12' => '12 — Desember',
         ];
 
-        $currentYear = (int) now()->year;
-        $years = collect(range($currentYear - 2, $currentYear + 1))
-            ->mapWithKeys(fn (int $y) => [(string) $y => (string) $y])
-            ->all();
-
         return [
-            Forms\Components\Select::make('lot_month')
-                ->label('Bulan Produksi')
-                ->options($months)
-                ->default(now()->format('m'))
-                ->live()
-                ->required()
-                ->helperText('Dipakai untuk MM di nomor LOT dan bulan produksi di label.'),
-            Forms\Components\Select::make('lot_year')
-                ->label('Tahun Produksi')
-                ->options($years)
-                ->default((string) $currentYear)
-                ->live()
-                ->required()
-                ->helperText('Dipakai untuk YY di nomor LOT dan tahun produksi di label.'),
+            Forms\Components\Grid::make(2)
+                ->schema([
+                    Forms\Components\Select::make('lot_month')
+                        ->label('Bulan Produksi')
+                        ->options($months)
+                        ->default(now()->format('m'))
+                        ->live()
+                        ->required(),
+                    Forms\Components\TextInput::make('lot_year')
+                        ->label('Tahun Produksi')
+                        ->numeric()
+                        ->default((int) now()->year)
+                        ->minValue(1)
+                        ->maxLength(4)
+                        ->live(onBlur: true)
+                        ->required(),
+                ])
+                ->columnSpanFull(),
         ];
     }
 
     public static function resolveLotPeriod(array $data): string
     {
-        $year = (int) ($data['lot_year'] ?? now()->year);
-        $month = (int) ($data['lot_month'] ?? now()->month);
+        $year = (int) ($data['lot_year'] ?? 0);
+        $month = (int) ($data['lot_month'] ?? 0);
+
+        if ($year < 1) {
+            $year = (int) now()->year;
+        }
+        if ($month < 1 || $month > 12) {
+            $month = (int) now()->month;
+        }
 
         return sprintf('%04d-%02d', $year, $month);
     }
