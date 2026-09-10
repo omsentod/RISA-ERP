@@ -280,7 +280,8 @@ body {
     cursor: move;
     position: relative;
     user-select: none;
-    border: 1px dashed #ccc; /* Garis bantu untuk blok judul */
+    outline: 1px dashed #ccc; /* Gunakan outline agar tidak memakan ruang box model (layout persis sama dengan print) */
+    outline-offset: -1px;
     background: rgba(240, 248, 255, 0.3); /* Sedikit warna untuk penanda */
 }
 .draggable-title.dragging {
@@ -330,14 +331,14 @@ body {
 
 .editable-field {
     border: 1px dashed transparent;
-    padding: 0 1px;
+    padding: 0;
     transition: all 0.2s;
     cursor: text;
     border-radius: 2px;
 }
 .editable-field:hover, .editable-field:focus {
-    border-color: #666;
-    outline: none;
+    outline: 1px dashed #666;
+    outline-offset: -1px;
     background-color: #f0f0f0;
 }
 
@@ -348,6 +349,7 @@ body {
     }
     .editable-field {
         border: none !important;
+        outline: none !important;
         background: transparent !important;
         padding: 0 !important;
     }
@@ -356,6 +358,7 @@ body {
     }
     .draggable-title {
         border: none !important;
+        outline: none !important;
         background: transparent !important;
     }
 

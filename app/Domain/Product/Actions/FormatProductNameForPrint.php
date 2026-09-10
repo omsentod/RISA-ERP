@@ -19,12 +19,18 @@ class FormatProductNameForPrint
         $formatted = preg_replace('/(\bHoles)\s+(\d+\b)/i', '$1&nbsp;$2', $formatted);
 
         $formatted = preg_replace('/\s+-\s+(Left|Right|Straight|Curved)\b/i', '&nbsp;-&nbsp;$1', $formatted);
+        $formatted = preg_replace('/\s+\(\s*(Left|Right|Straight|Curved)\s*\)/i', '&nbsp;($1)', $formatted);
+
         if (strlen($trimmed) > 22) {
-            $patternHolesEnd = '/\s+((?:\d+&nbsp;Holes|Holes&nbsp;\d+)(?:&nbsp;-&nbsp;(?:Left|Right|Straight|Curved))?)$/i';
+            $patternHolesEnd = '/(?:\s+|&nbsp;)+((?:\d+&nbsp;Holes|Holes&nbsp;\d+)(?:(?:&nbsp;-&nbsp;|\s+)\(?(?:Left|Right|Straight|Curved)\)?)?)$/i';
+            $patternParenEnd = '/(?:\s+|&nbsp;)+(\((?:Left|Right|Straight|Curved|\d+&nbsp;Holes|Holes&nbsp;\d+|[^\)]+)\))$/i';
+
             if (preg_match($patternHolesEnd, $formatted)) {
                 $formatted = preg_replace($patternHolesEnd, '<br>$1', $formatted, 1);
             } elseif (preg_match('/\s+(&nbsp;-&nbsp;(?:Left|Right|Straight|Curved))$/i', $formatted)) {
                 $formatted = preg_replace('/\s+(&nbsp;-&nbsp;(?:Left|Right|Straight|Curved))$/i', '<br>$1', $formatted, 1);
+            } elseif (preg_match($patternParenEnd, $formatted)) {
+                $formatted = preg_replace($patternParenEnd, '<br>$1', $formatted, 1);
             }
         }
 

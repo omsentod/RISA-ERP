@@ -42,4 +42,11 @@ class FormatProductNameForPrintTest extends TestCase
         $expected = 'Plate 4&nbsp;Holes';
         $this->assertEquals($expected, $this->formatter->handle($input));
     }
+
+    public function test_formats_parentheses_suffix_with_smart_break(): void
+    {
+        $input = 'Proximal Lateral Femoral Plate (Left)';
+        $expected = 'Proximal Lateral Femoral Plate<br>(Left)';
+        $this->assertEquals($expected, $this->formatter->handle($input));
+    }
 }
