@@ -65,25 +65,16 @@ class ProductImportParser
                     continue;
                 }
 
-                $existing = $existingCodes[$code] ?? null;
-
-                if ($existing !== null) {
-                    $rows[] = new ProductImportRow(
-                        sheetIndex: $sheetIndex,
-                        rowNumber: $rowNumber,
-                        categoryName: $categoryName,
-                        code: $code,
-                        name: $name,
-                        specification: $spec,
-                        nieNumber: $nie,
-                        defaultQuantity: $qty > 0 ? $qty : 1,
-                        productGroupCode: $gol,
-                        status: ProductImportRow::STATUS_DUPLICATE,
-                        existingData: $existing,
-                    );
-
-                    continue;
-                }
+                $resolvedQty = $qty > 0 ? $qty : 1;
+                $exactMatch = $this->findExactMatch(
+                    $existingCodes[$code] ?? [],
+                    $categoryName,
+                    $name,
+                    $spec,
+                    $nie,
+                    $resolvedQty,
+                    $gol,
+                );
 
                 $rows[] = new ProductImportRow(
                     sheetIndex: $sheetIndex,
@@ -93,9 +84,12 @@ class ProductImportParser
                     name: $name,
                     specification: $spec,
                     nieNumber: $nie,
-                    defaultQuantity: $qty > 0 ? $qty : 1,
+                    defaultQuantity: $resolvedQty,
                     productGroupCode: $gol,
-                    status: ProductImportRow::STATUS_NEW,
+                    // Duplikat HANYA jika seluruh kolom sama persis dengan produk existing.
+                    // Kode sama tapi ada kolom yang beda → NEW (dibuat sebagai produk baru).
+                    status: $exactMatch !== null ? ProductImportRow::STATUS_DUPLICATE : ProductImportRow::STATUS_NEW,
+                    existingData: $exactMatch,
                 );
             }
         }
@@ -103,13 +97,16 @@ class ProductImportParser
         return $rows;
     }
 
+    /**
+     * @return array<string, array<int, array<string, mixed>>> daftar produk existing dikelompokkan per kode
+     */
     private function loadExistingCodes(): array
     {
         return Product::query()
             ->with(['category:id,name', 'registration:id,nie_number'])
             ->get(['id', 'code', 'name', 'specification', 'default_quantity', 'product_group_code', 'product_category_id', 'registration_id'])
-            ->keyBy('code')
-            ->map(fn (Product $p) => [
+            ->groupBy('code')
+            ->map(fn ($group) => $group->map(fn (Product $p) => [
                 'code' => $p->code,
                 'name' => $p->name,
                 'specification' => $p->specification,
@@ -117,8 +114,44 @@ class ProductImportParser
                 'nie_number' => $p->registration?->nie_number,
                 'default_quantity' => $p->default_quantity,
                 'product_group_code' => $p->product_group_code,
-            ])
+            ])->all())
             ->toArray();
+    }
+
+    /**
+     * Baris dianggap duplikat hanya jika SELURUH kolom sama persis dengan salah satu produk existing berkode sama.
+     *
+     * @param array<int, array<string, mixed>> $candidates
+     * @return array<string, mixed>|null
+     */
+    private function findExactMatch(
+        array $candidates,
+        string $categoryName,
+        ?string $name,
+        ?string $spec,
+        ?string $nie,
+        int $qty,
+        ?string $gol,
+    ): ?array {
+        foreach ($candidates as $existing) {
+            if (
+                $name === ($existing['name'] ?? null)
+                && $spec === ($existing['specification'] ?? null)
+                && $gol === ($existing['product_group_code'] ?? null)
+                && $qty === (int) ($existing['default_quantity'] ?? 1)
+                && $categoryName === (string) ($existing['category_name'] ?? '')
+                && $this->normalizeNie($nie) === $this->normalizeNie($existing['nie_number'] ?? null)
+            ) {
+                return $existing;
+            }
+        }
+
+        return null;
+    }
+
+    private function normalizeNie(?string $nie): string
+    {
+        return strtoupper(preg_replace('/[^0-9A-Z]/i', '', str_ireplace('AKD', '', (string) $nie)));
     }
 
     private function clean(mixed $value): ?string

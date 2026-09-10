@@ -4,6 +4,7 @@ namespace App\Filament\Resources\ProductResource\Pages;
 
 use App\Domain\Import\Actions\ApplyProductImport;
 use App\Domain\Import\Actions\GenerateProductTemplate;
+use App\Domain\Import\Data\ProductImportRow;
 use App\Domain\Import\Parsers\ProductImportParser;
 use App\Domain\Product\Actions\BuildPrintBarcodeJs;
 use App\Filament\Concerns\HasSelectionToggle;
@@ -13,12 +14,16 @@ use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class ListProducts extends ListRecords
 {
     use HasSelectionToggle;
 
     protected static string $resource = ProductResource::class;
+
+    /** @var array<string, mixed> Memo hasil parse preview per-request */
+    private array $importPreviewCache = [];
 
     protected function getHeaderActions(): array
     {
@@ -40,12 +45,19 @@ class ListProducts extends ListRecords
                             ->directory('imports')
                             ->required()
                             ->maxSize(10240)
+                            ->live()
                             ->helperText('File Excel (.xlsx) dengan kolom Spesifikasi | Kode | Nama Produk | NIE | QTY | Kode Golongan per sheet kategori.'),
+                        Forms\Components\Placeholder::make('preview')
+                            ->label('Preview (cek dulu sebelum import)')
+                            ->visible(fn (Forms\Get $get) => filled($get('file')))
+                            ->content(fn (Forms\Get $get) => view('filament.components.import-preview', [
+                                'result' => $this->previewImportRows($get('file')),
+                            ])),
                         Forms\Components\Radio::make('duplicate_strategy')
                             ->label('Penanganan Data Duplikat')
                             ->options([
-                                'skip' => 'Skip duplikat (Data existing tidak diubah)',
-                                'overwrite' => 'Overwrite duplikat (Timpa data lama dengan data baru di file)',
+                                'skip' => 'Skip yang sama persis (baris identik dengan produk existing tidak ditambah)',
+                                'create_new' => 'Buat produk baru (tetap tambahkan semua baris valid)',
                             ])
                             ->default('skip')
                             ->required(),
@@ -76,9 +88,8 @@ class ListProducts extends ListRecords
                             Notification::make()
                                 ->title('Import Excel Selesai')
                                 ->body(sprintf(
-                                    '%d ditambah, %d di-update, %d di-skip, %d invalid',
+                                    '%d ditambah, %d di-skip, %d invalid',
                                     $summary['inserted'],
-                                    $summary['updated'],
                                     $summary['skipped'],
                                     $summary['invalid']
                                 ))
@@ -121,5 +132,39 @@ class ListProducts extends ListRecords
                 ->color('gray')
                 ->button(),
         ];
+    }
+
+    /**
+     * Parse file yang diupload untuk preview import (memoized per-request).
+     *
+     * @return array<int, ProductImportRow>|array{__error: string}|null
+     */
+    private function previewImportRows(mixed $state): ?array
+    {
+        $value = is_array($state) ? (reset($state) ?: null) : $state;
+
+        if ($value instanceof TemporaryUploadedFile) {
+            $absolutePath = $value->getRealPath();
+            $key = 'tmp:' . $absolutePath;
+        } elseif (is_string($value) && $value !== '') {
+            $absolutePath = Storage::disk('local')->path($value);
+            $key = $value;
+        } else {
+            return null;
+        }
+
+        if (array_key_exists($key, $this->importPreviewCache)) {
+            return $this->importPreviewCache[$key];
+        }
+
+        if (!is_file($absolutePath)) {
+            return $this->importPreviewCache[$key] = null;
+        }
+
+        try {
+            return $this->importPreviewCache[$key] = app(ProductImportParser::class)->parse($absolutePath);
+        } catch (\Throwable $e) {
+            return $this->importPreviewCache[$key] = ['__error' => $e->getMessage()];
+        }
     }
 }
