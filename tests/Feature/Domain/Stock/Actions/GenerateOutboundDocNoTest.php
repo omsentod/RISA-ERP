@@ -48,14 +48,24 @@ class GenerateOutboundDocNoTest extends TestCase
         $this->assertSame('SJ-20260726-003', $docNo);
     }
 
-    public function test_starts_fresh_at_001_when_date_changes(): void
+    public function test_continues_sequence_across_days_within_same_year(): void
     {
         $this->makeTx('SJ-20260725-005', '2026-07-25');
         Carbon::setTestNow('2026-07-26 10:00:00');
 
         $docNo = app(GenerateOutboundDocNo::class)->handle();
 
-        $this->assertSame('SJ-20260726-001', $docNo);
+        $this->assertSame('SJ-20260726-006', $docNo);
+    }
+
+    public function test_resets_to_001_on_new_year(): void
+    {
+        $this->makeTx('SJ-20261230-042', '2026-12-30');
+        Carbon::setTestNow('2027-01-05 10:00:00');
+
+        $docNo = app(GenerateOutboundDocNo::class)->handle();
+
+        $this->assertSame('SJ-20270105-001', $docNo);
     }
 
     public function test_counts_soft_deleted_records_to_avoid_unique_constraint_conflict(): void

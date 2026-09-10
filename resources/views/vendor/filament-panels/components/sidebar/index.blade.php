@@ -160,7 +160,7 @@
             </div>
         @endif
 
-        <ul class="fi-sidebar-nav-groups -mx-2 flex flex-col gap-y-7">
+        <ul class="fi-sidebar-nav-groups -mx-2 hidden md:flex flex-col gap-y-7">
             @foreach ($activeGroupNavigation as $group)
                 <x-filament-panels::sidebar.group
                     :active="$group->isActive()"

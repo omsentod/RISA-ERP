@@ -148,7 +148,7 @@ Navigasi RISA ERP menggunakan **3 tingkat hierarki**:
 
 | Tingkat | Di mana | Implementasi |
 |---|---|---|
-| Meta-Category (Topbar) | `top-navbar-menu.blade.php` | Array `$metaCategories` — dropdown jika punya >1 group, direct link jika 1:1 |
+| Meta-Category (Topbar & hamburger mobile) | `config/navigation.php` (render: `top-navbar-menu.blade.php` desktop, `mobile-navbar-menu.blade.php` mobile) | Array `meta_categories` — dropdown jika punya >1 group, direct link jika 1:1 |
 | Parent Menu (Sidebar Group) | Sidebar group label (`.fi-sidebar-group-label`) | `$navigationGroup` di Resource/Page (contoh: `'Produk'`) + `->navigationGroups([...])` di `AdminPanelProvider.php` |
 | Menu Item (Sidebar Item) | Sidebar item link | `$navigationLabel` + `$navigationSort` di Resource/Page |
 
@@ -163,13 +163,13 @@ Navigasi RISA ERP menggunakan **3 tingkat hierarki**:
 **Cara menambah Parent Menu (sidebar group) baru di bawah meta-category yang sudah ada:**
 
 1. Tambahkan nama group baru di `->navigationGroups([...])` pada `AdminPanelProvider.php`
-2. Tambahkan nama group baru di array `groups` pada `$metaCategories` di `top-navbar-menu.blade.php`
+2. Tambahkan nama group baru di array `groups` pada `meta_categories` di `config/navigation.php`
 3. Set `$navigationGroup = '<nama group baru>'` di setiap Resource/Page yang masuk group tersebut
-4. Selesai — dropdown topbar otomatis menampilkan group baru, sidebar otomatis filter
+4. Selesai — dropdown topbar (desktop) & accordion hamburger (mobile) otomatis menampilkan group baru, sidebar otomatis filter
 
 **Cara menambah Meta-Category baru di topbar:**
 
-1. Tambahkan entry baru di array `$metaCategories` di `top-navbar-menu.blade.php` (label, icon, groups)
+1. Tambahkan entry baru di array `meta_categories` di `config/navigation.php` (label, icon, groups)
 2. Tambahkan nama group(s) di `->navigationGroups([...])` pada `AdminPanelProvider.php`
 3. Set `$navigationGroup` yang sesuai di setiap Resource/Page
 

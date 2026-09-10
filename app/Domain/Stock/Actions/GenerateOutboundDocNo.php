@@ -12,16 +12,17 @@ class GenerateOutboundDocNo
         $date ??= now();
         $prefix = 'SJ-' . $date->format('Ymd');
 
-        $lastToday = OutboundTransaction::query()
+        // Urutan berjalan per tahun (reset ke 001 tiap awal tahun).
+        $lastOfYear = OutboundTransaction::query()
             ->withTrashed()
-            ->whereDate('doc_date', $date->toDateString())
-            ->where('doc_no', 'like', "{$prefix}-%")
+            ->whereYear('doc_date', $date->year)
+            ->where('doc_no', 'like', 'SJ-%')
             ->orderByDesc('doc_no')
             ->value('doc_no');
 
         $seq = 1;
-        if ($lastToday !== null) {
-            $lastSeq = (int) substr($lastToday, strrpos($lastToday, '-') + 1);
+        if ($lastOfYear !== null) {
+            $lastSeq = (int) substr($lastOfYear, strrpos($lastOfYear, '-') + 1);
             $seq = $lastSeq + 1;
         }
 

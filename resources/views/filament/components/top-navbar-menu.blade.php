@@ -1,39 +1,9 @@
 @php
     $navigation = filament()->getNavigation();
 
-    // ──────────────────────────────────────────────────────────
-    // META-CATEGORIES: Topbar utama yang mengelompokkan
-    // Filament NavigationGroups ke dalam menu tingkat atas.
-    //
-    // "Master Data" = meta-category (dropdown di topbar)
-    //   └── berisi groups: ['Produk', ...future 'Gudang', etc.]
-    //
-    // "Manajemen Akses" = meta-category (direct link, 1:1 mapping)
-    //   └── berisi groups: ['Manajemen Akses']
-    //
-    // Untuk menambah parent menu baru di bawah "Master Data":
-    //   1. Tambah nama group baru di array 'groups' di bawah
-    //   2. Tambah group di ->navigationGroups() di AdminPanelProvider.php
-    //   3. Set $navigationGroup yang sesuai di Resource/Page baru
-    // ──────────────────────────────────────────────────────────
-
-    $metaCategories = [
-        [
-            'label' => 'Dashboard',
-            'icon' => 'heroicon-o-home',
-            'groups' => [''],  // empty string = no-label group (Dashboard)
-        ],
-        [
-            'label' => 'Master Data',
-            'icon' => 'heroicon-o-circle-stack',
-            'groups' => ['Produk'],
-        ],
-        [
-            'label' => 'Manajemen Akses',
-            'icon' => 'heroicon-o-shield-check',
-            'groups' => ['Manajemen Akses', 'Filament Shield', 'Roles'],
-        ],
-    ];
+    // Meta-categories didefinisikan di config/navigation.php (sumber tunggal,
+    // dipakai bersama oleh topbar desktop & hamburger mobile).
+    $metaCategories = config('navigation.meta_categories', []);
 
     // Build menu data dari navigation groups
     $menuItems = [];

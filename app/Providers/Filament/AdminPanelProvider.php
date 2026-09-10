@@ -37,6 +37,10 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::TOPBAR_START,
                 fn () => view('filament.components.top-navbar-menu'),
             )
+            ->renderHook(
+                PanelsRenderHook::SIDEBAR_NAV_START,
+                fn () => view('filament.components.mobile-navbar-menu'),
+            )
             ->login(Login::class)
             ->favicon(asset('assets/images/favicon.svg'))
             ->brandLogo(fn () => view('filament.components.brand-logo'))
