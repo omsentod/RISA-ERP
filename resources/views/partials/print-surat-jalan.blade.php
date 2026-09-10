@@ -25,7 +25,7 @@
         {{-- ================= TOP HEADER ================= --}}
         <div class="header-top">
             <div class="company-info">
-                <div class="company-name">PT.Risa Implantama</div>
+                <div class="company-name">PT.RISA Implantama</div>
                 <div class="company-addr">Jl. Raya Medokan Sawah Timur No 41</div>
                 <div class="company-city">Surabaya</div>
             </div>

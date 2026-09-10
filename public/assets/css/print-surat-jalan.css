@@ -78,7 +78,7 @@ html, body {
 table.ncr-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 11.5pt;
+    font-size: 10pt;
     margin-bottom: 3mm;
     page-break-inside: avoid;
     break-inside: avoid;
@@ -89,7 +89,7 @@ table.ncr-table td {
     border: 1px solid #000;
     border-left-width: 2px;
     border-right-width: 2px;
-    padding: 1.6mm 2mm;
+    padding: 1.2mm 1.6mm;
     vertical-align: middle;
 }
 
@@ -97,19 +97,23 @@ table.ncr-table th {
     font-weight: bold;
     text-align: center;
     background: #fff;
-    font-size: 11.5pt;
-    padding: 1.8mm 2mm;
+    font-size: 10.5pt;
+    padding: 1.4mm 1.6mm;
     border-width: 2px;
+}
+
+table.ncr-table tbody td {
+    font-size: 8.3pt;
 }
 
 /* COLUMN WIDTHS & ALIGNMENT */
 .col-no {
-    width: 9mm;
+    width: 8mm;
     text-align: center;
 }
 
 .col-item {
-    width: 26mm;
+    width: 24mm;
     text-align: left;
 }
 
@@ -118,32 +122,33 @@ table.ncr-table th {
 }
 
 .col-nie {
-    width: 44mm;
+    width: 38mm;
     text-align: left;
     white-space: nowrap;
 }
 
 .col-batch {
-    width: 28mm;
+    width: 25mm;
     text-align: center;
     white-space: nowrap;
 }
 
 .col-jumlah {
-    width: 22mm;
+    width: 20mm;
     text-align: right;
     white-space: nowrap;
 }
 
 /* EMPTY GRID ROWS FOR NCR FORM */
 table.ncr-table tr.empty-row td {
-    height: 6.5mm;
+    height: 5.5mm;
 }
 
 /* FOOTER TOTAL */
 table.ncr-table tfoot td {
+    font-size: 10pt;
     font-weight: bold;
-    padding: 1.8mm 2mm;
+    padding: 1.4mm 1.6mm;
 }
 
 table.ncr-table td.total-label {
