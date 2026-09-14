@@ -134,7 +134,7 @@ class ProductResource extends Resource
                     ->wrap()
                     ->limit(80)
                     ->tooltip(fn ($record) => $record?->specification)
-                    ->toggleable(),
+                    ->hidden(),
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('Kategori')
                     ->searchable()
