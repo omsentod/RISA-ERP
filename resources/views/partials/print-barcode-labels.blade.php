@@ -108,9 +108,10 @@
             if (!empty($serverLayout['barcode']['transform']) && $serverLayout['barcode']['transform'] !== 'none') {
                 $initialBarcodeStyle .= 'transform:' . $serverLayout['barcode']['transform'] . ';';
             }
+            $productName = $label['raw_name'] ?? strip_tags(str_replace('&nbsp;', ' ', $label['name']));
         @endphp
         <div class="sheet">
-            <div class="label" data-product-code="{{ $label['code'] }}" data-server-layout="{{ json_encode($serverLayout) }}">
+            <div class="label" data-product-name="{{ $productName }}" data-product-code="{{ $label['code'] }}" data-server-layout="{{ json_encode($serverLayout) }}">
                 
                 <!-- GROUP 1: Product Title (Reserved space at top for pre-printed OSFIX logo on paper) -->
                 <div class="group-1">
@@ -183,9 +184,16 @@
     <!-- ================= LOGIKA JAVASCRIPT ================= -->
     <script>
         const PRESET_STORAGE_KEY = 'risa_label_studio_presets';
-        const PRODUCT_PRESETS_KEY = 'risa_label_studio_product_presets';
+        const PRODUCT_PRESETS_KEY = 'risa_label_studio_product_name_presets';
+        const LEGACY_PRODUCT_PRESETS_KEY = 'risa_label_studio_product_presets';
         const ACTIVE_PRESET_KEY = 'risa_label_studio_active_preset';
         const LIVE_SYNC_KEY = 'risa_label_studio_live_sync';
+
+        // Helper untuk mencari semua elemen label berdasarkan nama produk (aman dari tanda kutip atau karakter khusus)
+        function getLabelsByProductName(name) {
+            if (!name) return [];
+            return Array.from(document.querySelectorAll('.label')).filter(el => el.getAttribute('data-product-name') === name);
+        }
 
         // Default live sync: false agar admin leluasa mengatur tiap produk secara independen
         let liveSyncEnabled = localStorage.getItem(LIVE_SYNC_KEY) === 'true'; 
@@ -232,10 +240,10 @@
             }
         }
 
-        // Penyimpanan Preset Khusus per Kode Produk (Per-SKU)
+        // Penyimpanan Preset Khusus per Nama Produk (Bisa berbeda meski SKU sama)
         function getStoredProductPresets() {
             try {
-                const data = localStorage.getItem(PRODUCT_PRESETS_KEY);
+                const data = localStorage.getItem(PRODUCT_PRESETS_KEY) || localStorage.getItem(LEGACY_PRODUCT_PRESETS_KEY);
                 if (data) {
                     const parsed = JSON.parse(data);
                     if (parsed && typeof parsed === 'object') return parsed;
@@ -295,7 +303,7 @@
             }
         }
 
-        // Ambil layout terkini dari label
+        // Ambil layout terkini dari label (selalu membaca nilai konkret font-size & height)
         function getLabelCurrentLayout(label) {
             if (!label) label = document.querySelector('.label');
             if (!label) return null;
@@ -303,11 +311,28 @@
             const titleEl = label.querySelector('.draggable-title');
             const barcodeEl = label.querySelector('.draggable-barcode');
 
+            let titleFontSize = '';
+            let titleHeight = '';
+            if (titleEl) {
+                if (titleEl.style.fontSize) {
+                    titleFontSize = titleEl.style.fontSize;
+                } else {
+                    const style = window.getComputedStyle(titleEl);
+                    titleFontSize = Math.round(parseFloat(style.fontSize)) + 'px';
+                }
+
+                if (titleEl.style.height) {
+                    titleHeight = titleEl.style.height;
+                } else if (titleEl.offsetHeight > 0) {
+                    titleHeight = titleEl.offsetHeight + 'px';
+                }
+            }
+
             return {
                 title: {
                     transform: titleEl ? titleEl.style.transform || 'none' : 'none',
-                    fontSize: titleEl ? titleEl.style.fontSize || '' : '',
-                    height: titleEl ? titleEl.style.height || '' : ''
+                    fontSize: titleFontSize,
+                    height: titleHeight
                 },
                 barcode: {
                     transform: barcodeEl ? barcodeEl.style.transform || 'none' : 'none'
@@ -315,21 +340,25 @@
             };
         }
 
-        // Simpan preset: simpan konfigurasi masing-masing produk ke database MySQL via API & cache lokal
+        // Simpan preset: simpan konfigurasi masing-masing produk ke database MySQL via API & cache lokal per nama produk
         window.saveCurrentPreset = function() {
+            if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
+            }
+
             const productPresets = getStoredProductPresets();
-            const uniqueCodes = new Set();
+            const uniqueNames = new Set();
             const layoutsToSave = {};
 
-            // 1. Rekam konfigurasi layout untuk setiap kode produk unik yang ada di halaman
+            // 1. Rekam konfigurasi layout untuk setiap nama produk unik yang ada di halaman
             document.querySelectorAll('.label').forEach(label => {
-                const code = label.getAttribute('data-product-code');
-                if (code && !uniqueCodes.has(code)) {
-                    uniqueCodes.add(code);
+                const name = label.getAttribute('data-product-name');
+                if (name && !uniqueNames.has(name)) {
+                    uniqueNames.add(name);
                     const layout = getLabelCurrentLayout(label);
                     if (layout) {
-                        productPresets[code] = layout;
-                        layoutsToSave[code] = layout;
+                        productPresets[name] = layout;
+                        layoutsToSave[name] = layout;
                     }
                 }
             });
@@ -354,7 +383,7 @@
             const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
 
             if (csrfToken && Object.keys(layoutsToSave).length > 0) {
-                showToast(`Menyimpan ${uniqueCodes.size} preset ke database...`, true);
+                showToast(`Menyimpan ${uniqueNames.size} preset ke database...`, true);
                 fetch('/admin/products/save-label-layout', {
                     method: 'POST',
                     headers: {
@@ -369,17 +398,17 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data && data.success) {
-                        showToast(`Preset tersimpan di Database (${uniqueCodes.size} produk)`);
+                        showToast(`Preset tersimpan di Database (${uniqueNames.size} produk)`);
                     } else {
-                        showToast(`Preset tersimpan di browser (${uniqueCodes.size} produk)`);
+                        showToast(`Preset tersimpan di browser (${uniqueNames.size} produk)`);
                     }
                 })
                 .catch(err => {
                     console.warn('Gagal menyimpan ke server, tersimpan di browser:', err);
-                    showToast(`Preset tersimpan di browser (${uniqueCodes.size} produk)`);
+                    showToast(`Preset tersimpan di browser (${uniqueNames.size} produk)`);
                 });
             } else {
-                showToast(`Preset untuk ${uniqueCodes.size} produk berhasil disimpan`);
+                showToast(`Preset untuk ${uniqueNames.size} produk berhasil disimpan`);
             }
         };
 
@@ -418,6 +447,10 @@
 
         // Terapkan ke semua label (Canva-style)
         window.applyToAllLabels = function() {
+            if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
+            }
+
             const sourceLabel = lastInteractedLabel || document.querySelector('.label');
             const layout = getLabelCurrentLayout(sourceLabel);
             if (!layout) return;
@@ -426,7 +459,8 @@
                 applyLayoutToLabel(label, layout);
             });
 
-            showToast('Tata letak diterapkan ke seluruh label');
+            const fontMsg = layout.title.fontSize ? ` (Font ${layout.title.fontSize})` : '';
+            showToast(`Tata letak${fontMsg} diterapkan ke seluruh label`);
         };
 
         // Toggle Live Sync
@@ -448,8 +482,9 @@
                 return;
             }
 
-            // Hapus preset per produk yang tersimpan
+            // Hapus preset per produk yang tersimpan (nama produk & legacy)
             localStorage.removeItem(PRODUCT_PRESETS_KEY);
+            localStorage.removeItem(LEGACY_PRODUCT_PRESETS_KEY);
 
             document.querySelectorAll('.draggable-title').forEach(el => {
                 el.style.transform = '';
@@ -489,7 +524,7 @@
             });
         }
 
-        // Terapkan preset ke seluruh halaman: memprioritaskan database server, lalu cache lokal per-SKU
+        // Terapkan preset ke seluruh halaman: memprioritaskan database server, lalu cache lokal per-nama produk
         function applyPresetsToPage() {
             const productPresets = getStoredProductPresets();
             const savedActivePreset = localStorage.getItem(ACTIVE_PRESET_KEY) || 'Standar';
@@ -497,6 +532,7 @@
             const fallbackLayout = presets[savedActivePreset] || defaultPresets['Standar'];
 
             document.querySelectorAll('.label').forEach(label => {
+                const name = label.getAttribute('data-product-name');
                 const code = label.getAttribute('data-product-code');
                 const rawServer = label.getAttribute('data-server-layout');
                 let serverLayout = null;
@@ -508,10 +544,12 @@
                 if (serverLayout && (serverLayout.title || serverLayout.barcode)) {
                     applyLayoutToLabel(label, serverLayout);
                     // Sinkronkan juga ke cache lokal
-                    if (code) productPresets[code] = serverLayout;
+                    if (name) productPresets[name] = serverLayout;
                 } 
-                // Prioritas 2: Layout dari cache lokal per-kode produk
-                else if (code && productPresets[code]) {
+                // Prioritas 2: Layout dari cache lokal per-nama produk (atau fallback per-kode produk)
+                else if (name && productPresets[name]) {
+                    applyLayoutToLabel(label, productPresets[name]);
+                } else if (code && productPresets[code]) {
                     applyLayoutToLabel(label, productPresets[code]);
                 } 
                 // Prioritas 3: Fallback template global
@@ -545,6 +583,16 @@
                     const style = window.getComputedStyle(title);
                     indicator.innerText = Math.round(parseFloat(style.fontSize)) + 'px';
                 }
+            });
+
+            // Tandai label aktif saat disentuh / diklik di mana pun
+            document.querySelectorAll('.label').forEach(label => {
+                label.addEventListener('pointerdown', function() {
+                    lastInteractedLabel = this;
+                });
+                label.addEventListener('click', function() {
+                    lastInteractedLabel = this;
+                });
             });
 
             // Setup Drag untuk Judul dan Barcode
@@ -602,12 +650,13 @@
                             if (el !== currentEl) el.style.transform = transform;
                         });
                     } else {
-                        // Sinkronkan hanya ke lembar duplikat produk yang sama
+                        // Sinkronkan ke lembar duplikat dengan nama produk yang sama
                         const label = currentEl.closest('.label');
                         if (label) {
-                            const code = label.getAttribute('data-product-code');
-                            document.querySelectorAll(`.label[data-product-code="${code}"] ${selector}`).forEach(el => {
-                                if (el !== currentEl) el.style.transform = transform;
+                            const name = label.getAttribute('data-product-name');
+                            getLabelsByProductName(name).forEach(lbl => {
+                                const target = lbl.querySelector(selector);
+                                if (target && target !== currentEl) target.style.transform = transform;
                             });
                         }
                     }
@@ -626,13 +675,14 @@
                     const label = this.closest('.label');
                     if (!label) return;
                     lastInteractedLabel = label;
-                    const code = label.getAttribute('data-product-code');
+                    const name = label.getAttribute('data-product-name');
                     const type = this.getAttribute('data-field-type');
                     const text = this.innerText;
 
-                    // Sinkronisasi teks ke produk yang sama
-                    document.querySelectorAll(`.label[data-product-code="${code}"] .editable-field[data-field-type="${type}"]`).forEach(el => {
-                        if (el !== this) el.innerText = text;
+                    // Sinkronisasi teks ke produk dengan nama yang sama
+                    getLabelsByProductName(name).forEach(lbl => {
+                        const target = lbl.querySelector(`.editable-field[data-field-type="${type}"]`);
+                        if (target && target !== this) target.innerText = text;
                     });
                 });
             });
@@ -671,9 +721,10 @@
                                 if (el !== container) updateEl(el);
                             });
                         } else if (label) {
-                            const code = label.getAttribute('data-product-code');
-                            document.querySelectorAll(`.label[data-product-code="${code}"] .draggable-title`).forEach(el => {
-                                if (el !== container) updateEl(el);
+                            const name = label.getAttribute('data-product-name');
+                            getLabelsByProductName(name).forEach(lbl => {
+                                const target = lbl.querySelector('.draggable-title');
+                                if (target && target !== container) updateEl(target);
                             });
                         }
                     } else {
@@ -715,9 +766,10 @@
                     if (el !== container) updateEl(el);
                 });
             } else if (label) {
-                const code = label.getAttribute('data-product-code');
-                document.querySelectorAll(`.label[data-product-code="${code}"] .draggable-title`).forEach(el => {
-                    if (el !== container) updateEl(el);
+                const name = label.getAttribute('data-product-name');
+                getLabelsByProductName(name).forEach(lbl => {
+                    const target = lbl.querySelector('.draggable-title');
+                    if (target && target !== container) updateEl(target);
                 });
             }
         };
@@ -753,12 +805,13 @@
                     }
                 });
             } else if (label) {
-                const code = label.getAttribute('data-product-code');
-                document.querySelectorAll(`.label[data-product-code="${code}"] .draggable-title`).forEach(el => {
-                    if (el !== container) {
-                        el.style.maxHeight = 'none';
-                        el.style.flexShrink = '0';
-                        el.style.height = heightStr;
+                const name = label.getAttribute('data-product-name');
+                getLabelsByProductName(name).forEach(lbl => {
+                    const target = lbl.querySelector('.draggable-title');
+                    if (target && target !== container) {
+                        target.style.maxHeight = 'none';
+                        target.style.flexShrink = '0';
+                        target.style.height = heightStr;
                     }
                 });
             }

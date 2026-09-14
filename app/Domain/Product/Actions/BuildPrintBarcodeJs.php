@@ -114,6 +114,8 @@ class BuildPrintBarcodeJs
             $cleanNie = trim(preg_replace('/AKD\s*/i', '', $p->registration?->nie_number ?? self::NIE_FALLBACK));
 
             $row = [
+                'product_id' => $p->id,
+                'raw_name' => $p->name,
                 'code' => $p->code,
                 'name' => $formattedName,
                 'specification' => $p->specification ?? '',
