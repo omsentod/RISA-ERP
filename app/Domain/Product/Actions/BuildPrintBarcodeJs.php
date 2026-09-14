@@ -114,6 +114,8 @@ class BuildPrintBarcodeJs
             $cleanNie = trim(preg_replace('/AKD\s*/i', '', $p->registration?->nie_number ?? self::NIE_FALLBACK));
 
             $row = [
+                'product_id' => $p->id,
+                'raw_name' => $p->name,
                 'code' => $p->code,
                 'name' => $formattedName,
                 'specification' => $p->specification ?? '',
@@ -123,6 +125,7 @@ class BuildPrintBarcodeJs
                 'expired_at' => $p->registration?->expired_at?->format('Y m') ?? self::EXPIRY_FALLBACK,
                 'year_month' => $date->format('Y m'),
                 'svg' => $svg,
+                'label_layout' => $p->label_layout,
             ];
 
             for ($i = 0; $i < $duplicateCount; $i++) {
@@ -168,20 +171,10 @@ class BuildPrintBarcodeJs
             const bytes = Uint8Array.from(atob('{$encodedHtml}'), c => c.charCodeAt(0));
             const html = new TextDecoder('utf-8').decode(bytes);
             
-            // Tambahkan tombol print mengambang
-            const printBtnHtml = `
-                <div class="no-print" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
-                    <button onclick="window.print()" style="padding: 15px 25px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 16px;">
-                        🖨️ CETAK SEKARANG
-                    </button>
-                </div>
-            `;
-            const finalHtml = html.replace('</body>', printBtnHtml + '</body>');
-
             const printWindow = window.open('', '_blank');
             if (printWindow) {
                 printWindow.document.open();
-                printWindow.document.write(finalHtml);
+                printWindow.document.write(html);
                 printWindow.document.close();
                 
                 // Beri waktu sebentar agar font dan gambar termuat

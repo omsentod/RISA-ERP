@@ -24,6 +24,7 @@ class Product extends Model
         'specification',
         'default_quantity',
         'product_group_code',
+        'label_layout',
         'description',
         'is_published',
         'published_at',
@@ -34,6 +35,7 @@ class Product extends Model
     {
         return [
             'default_quantity' => 'integer',
+            'label_layout' => 'array',
             'is_published' => 'boolean',
             'published_at' => 'datetime',
         ];
