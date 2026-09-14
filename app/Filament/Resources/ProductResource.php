@@ -9,6 +9,7 @@ use App\Filament\Resources\ProductResource\Pages;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\TrashedFilter;
@@ -293,9 +294,55 @@ class ProductResource extends Resource
                     })
                     ->deselectRecordsAfterCompletion(),
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->requiresConfirmation(),
-                    Tables\Actions\ForceDeleteBulkAction::make()->requiresConfirmation(),
-                    Tables\Actions\RestoreBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->requiresConfirmation()
+                        ->action(function (Collection $records) {
+                            $count = $records->count();
+                            $ids = $records->pluck('id')->all();
+                            foreach (array_chunk($ids, 500) as $chunk) {
+                                Product::whereIn('id', $chunk)->delete();
+                            }
+                            Notification::make()
+                                ->title("{$count} produk berhasil dihapus")
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
+                    Tables\Actions\ForceDeleteBulkAction::make()
+                        ->requiresConfirmation()
+                        ->action(function (Collection $records) {
+                            try {
+                                $count = $records->count();
+                                $ids = $records->pluck('id')->all();
+                                foreach (array_chunk($ids, 500) as $chunk) {
+                                    Product::withTrashed()->whereIn('id', $chunk)->forceDelete();
+                                }
+                                Notification::make()
+                                    ->title("{$count} produk berhasil dihapus permanen")
+                                    ->success()
+                                    ->send();
+                            } catch (\Illuminate\Database\QueryException $e) {
+                                Notification::make()
+                                    ->title('Gagal Menghapus Permanen')
+                                    ->body('Sebagian produk tidak dapat dihapus permanen karena masih terkait dengan riwayat transaksi keluar.')
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->deselectRecordsAfterCompletion(),
+                    Tables\Actions\RestoreBulkAction::make()
+                        ->action(function (Collection $records) {
+                            $count = $records->count();
+                            $ids = $records->pluck('id')->all();
+                            foreach (array_chunk($ids, 500) as $chunk) {
+                                Product::onlyTrashed()->whereIn('id', $chunk)->restore();
+                            }
+                            Notification::make()
+                                ->title("{$count} produk berhasil dipulihkan")
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
                 ]),
             ])
             ->deferLoading();
