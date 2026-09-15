@@ -8,11 +8,15 @@ use Illuminate\Support\Collection;
 
 class BuildPrintBarcodeJs
 {
-    private const BARCODE_QTY_DELIMITER = '*';
+    /**
+     * Qty selalu 2 digit di akhir data barcode (01-99).
+     * Decoder: 2 digit terakhir = qty, sisanya = product ID.
+     */
+    private const BARCODE_QTY_DIGITS = 2;
 
     private const MAX_LABELS_PER_BATCH = 200;
 
-    private const BARCODE_WIDTH_THRESHOLD = 10;
+    private const BARCODE_WIDTH_THRESHOLD = 6;
 
     private const BARCODE_WIDTH_FACTOR_COMPACT = 2;
 
@@ -108,7 +112,7 @@ class BuildPrintBarcodeJs
             $duplicateCount = max(1, (int) ($config['duplicate_count'] ?? 0));
             $qtyPerLabel = max(1, (int) ($config['quantity_per_label'] ?? 0) ?: (int) ($p->default_quantity ?? 1));
 
-            $barcodeData = str_replace(' ', '', $p->code) . self::BARCODE_QTY_DELIMITER . $qtyPerLabel;
+            $barcodeData = $this->encodeCompactBarcode($p->id, $qtyPerLabel);
             $svg = $this->renderBarcodeSvg($barcodeData);
             $formattedName = $this->formatName->handle($p->name);
             $cleanNie = trim(preg_replace('/AKD\s*/i', '', $p->registration?->nie_number ?? self::NIE_FALLBACK));
@@ -142,6 +146,17 @@ class BuildPrintBarcodeJs
         $lotGen->recordPrintActivity($sequence);
 
         return $sequence;
+    }
+
+    /**
+     * Encode data barcode kompak: product ID + qty 2 digit (pure numerik).
+     *
+     * Contoh: ID=47, qty=1 → '4701'  |  ID=123, qty=5 → '12305'
+     * Decode: 2 digit terakhir = qty, sisanya = product ID.
+     */
+    private function encodeCompactBarcode(int $productId, int $qty): string
+    {
+        return $productId . str_pad(min($qty, 99), self::BARCODE_QTY_DIGITS, '0', STR_PAD_LEFT);
     }
 
     private function renderBarcodeSvg(string $data): string

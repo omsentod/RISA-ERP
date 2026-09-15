@@ -126,4 +126,79 @@ class AddScanToOutboundTest extends TestCase
         $this->assertSame(4, $result['item']->quantity);
         $this->assertDatabaseCount('outbound_transaction_items', 1);
     }
+
+    // ====== TEST BARCODE KOMPAK (FORMAT BARU: PRODUCT ID + QTY 2 DIGIT) ======
+
+    public function test_compact_barcode_finds_product_by_database_id(): void
+    {
+        $product = Product::factory()->create(['code' => 'OF 1010 04']);
+        $tx = $this->makeDraft();
+
+        // Barcode kompak: {product_id}{qty_2digit}
+        $barcodeData = $product->id . '01';
+        $result = app(AddScanToOutbound::class)->handle($tx, $barcodeData);
+
+        $this->assertTrue($result['isNew']);
+        $this->assertSame($product->id, $result['item']->product_id);
+        $this->assertSame(1, $result['item']->quantity);
+    }
+
+    public function test_compact_barcode_reads_qty_from_last_two_digits(): void
+    {
+        $product = Product::factory()->create(['code' => 'OF 5131 25']);
+        $tx = $this->makeDraft();
+
+        // qty = 05
+        $barcodeData = $product->id . '05';
+        $result = app(AddScanToOutbound::class)->handle($tx, $barcodeData);
+
+        $this->assertSame(5, $result['item']->quantity);
+    }
+
+    public function test_compact_barcode_increments_qty_on_repeated_scan(): void
+    {
+        $product = Product::factory()->create(['code' => 'OF 1010 04']);
+        $tx = $this->makeDraft();
+
+        $barcodeData = $product->id . '01';
+        app(AddScanToOutbound::class)->handle($tx, $barcodeData);
+        $result = app(AddScanToOutbound::class)->handle($tx, $barcodeData);
+
+        $this->assertFalse($result['isNew']);
+        $this->assertSame(2, $result['item']->quantity);
+        $this->assertDatabaseCount('outbound_transaction_items', 1);
+    }
+
+    public function test_old_format_with_asterisk_still_works(): void
+    {
+        Product::factory()->create(['code' => 'OF 1010 04']);
+        $tx = $this->makeDraft();
+
+        // Format lama harus tetap berfungsi
+        $result = app(AddScanToOutbound::class)->handle($tx, 'OF101004*3');
+
+        $this->assertSame(3, $result['item']->quantity);
+    }
+
+    public function test_old_format_with_code_spaces_still_works(): void
+    {
+        Product::factory()->create(['code' => 'OF 1010 04']);
+        $tx = $this->makeDraft();
+
+        // Format lama dengan spasi
+        $result = app(AddScanToOutbound::class)->handle($tx, 'OF 1010 04');
+
+        $this->assertTrue($result['isNew']);
+        $this->assertSame(1, $result['item']->quantity);
+    }
+
+    public function test_compact_barcode_falls_back_when_id_not_found(): void
+    {
+        $tx = $this->makeDraft();
+
+        // ID 99999 tidak ada, dan juga bukan kode produk valid → error
+        $this->expectException(RuntimeException::class);
+        app(AddScanToOutbound::class)->handle($tx, '9999901');
+    }
 }
+

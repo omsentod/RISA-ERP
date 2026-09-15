@@ -171,25 +171,25 @@ body {
     align-items: center;
     justify-content: center;
     height: 100%;
-    width: 14mm;
+    width: 16mm;
     flex-shrink: 0;
     gap: 1mm;
 }
 
 .barcode-wrapper {
-    width: 10mm;
-    height: 46mm;
+    width: 12mm;
+    height: 38mm;
     position: relative;
     flex-shrink: 0;
 }
 
 .barcode-svg-container {
     position: absolute;
-    width: 46mm;
-    height: 10mm;
+    width: 38mm;
+    height: 12mm;
     transform: rotate(90deg);
     transform-origin: top left;
-    left: 10mm;
+    left: 12mm;
     top: 0;
 }
 
