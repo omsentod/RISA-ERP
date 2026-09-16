@@ -18,11 +18,9 @@ class BuildPrintBarcodeJs
 
     private const MAX_LABELS_PER_BATCH = 200;
 
-    private const BARCODE_WIDTH_THRESHOLD = 6;
-
-    private const BARCODE_WIDTH_FACTOR_COMPACT = 2;
-
-    private const BARCODE_WIDTH_FACTOR_WIDE = 3;
+    // Code 128C: setiap 2 digit = 1 simbol → barcode lebih pendek, spasi lebih jelas.
+    // widthFactor 2 sudah cukup karena jumlah bar sudah setengahnya.
+    private const BARCODE_WIDTH_FACTOR = 2;
 
     private const BARCODE_HEIGHT = 70;
 
@@ -154,19 +152,36 @@ class BuildPrintBarcodeJs
     /**
      * Encode data barcode kompak: product ID + qty 2 digit + nomor LOT 9 digit (pure numerik).
      *
-     * Format: {productId}{qty_2digit}{lot_9digit}
-     * Contoh: ID=47, qty=1, lot="122608099" → "4701122608099" (13 digit)
-     * Decode: 9 digit terakhir = LOT, 2 digit sebelumnya = qty, sisanya = product ID.
+     * Format: {productId_even}{qty_2digit}{lot_9digit}
+     * Product ID di-pad agar panjang keseluruhan selalu GENAP (syarat Code 128C).
+     *
+     * Contoh: ID=47 (2 digit) + qty(2) + lot(9) = 13 → total ganjil → pad ID ke 4 digit:
+     *   "0047" + "01" + "122608099" = "004701122608099" (14 digit?) → masih ganjil?
+     *   → pad lagi ke total genap dengan leading 0 di depan keseluruhan string.
+     *
+     * Contoh: ID=3617 (4 digit) + qty(2) + lot(9) = 15 → ganjil → prepend "0" → 16 EVEN ✓
      */
     private function encodeCompactBarcode(int $productId, int $qty, ?string $lot = null): string
     {
-        $base = $productId . str_pad((string) min($qty, 99), self::BARCODE_QTY_DIGITS, '0', STR_PAD_LEFT);
+        $qtyStr  = str_pad((string) min($qty, 99), self::BARCODE_QTY_DIGITS, '0', STR_PAD_LEFT);
+        $base    = (string) $productId . $qtyStr;
 
         if ($lot !== null) {
             $cleanLot = preg_replace('/\D/', '', $lot);
             if (strlen($cleanLot) === self::BARCODE_LOT_DIGITS) {
-                return $base . $cleanLot;
+                $full = $base . $cleanLot;
+                // Pastikan panjang genap agar valid untuk Code 128C
+                if (strlen($full) % 2 !== 0) {
+                    $full = '0' . $full;
+                }
+
+                return $full;
             }
+        }
+
+        // Tanpa lot: pad jika ganjil
+        if (strlen($base) % 2 !== 0) {
+            $base = '0' . $base;
         }
 
         return $base;
@@ -174,11 +189,10 @@ class BuildPrintBarcodeJs
 
     private function renderBarcodeSvg(string $data): string
     {
-        $widthFactor = strlen($data) > self::BARCODE_WIDTH_THRESHOLD
-            ? self::BARCODE_WIDTH_FACTOR_COMPACT
-            : self::BARCODE_WIDTH_FACTOR_WIDE;
-
-        $svg = $this->barcode->svg($data, widthFactor: $widthFactor, height: self::BARCODE_HEIGHT);
+        // Gunakan Code 128C: setiap 2 digit numerik = 1 simbol barcode.
+        // Hasilnya: jumlah bar setengahnya, spasi putih (quiet zone) 2× lebih lebar.
+        // Jauh lebih mudah dibaca oleh scanner 1D pada printer thermal berkualitas rendah.
+        $svg = $this->barcode->svgCode128C($data, widthFactor: self::BARCODE_WIDTH_FACTOR, height: self::BARCODE_HEIGHT);
 
         return str_replace('<svg ', '<svg preserveAspectRatio="none" ', $svg);
     }

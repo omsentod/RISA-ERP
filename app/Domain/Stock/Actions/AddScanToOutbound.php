@@ -54,6 +54,10 @@ class AddScanToOutbound
      * Format dengan LOT: {product_id}{qty_2digit}{lot_9digit} — contoh: "4701122608099" (13 digit)
      * Format tanpa LOT (legacy): {product_id}{qty_2digit} — contoh: "4701" (4 digit)
      *
+     * Catatan: Code 128C memerlukan panjang genap, sehingga encodeCompactBarcode() mungkin
+     * menambahkan leading "0" di depan seluruh string jika panjangnya ganjil.
+     * Decode harus mencoba stripLeadingZero pada bagian product ID jika gagal.
+     *
      * Return null jika bukan format kompak atau product ID tidak ditemukan.
      */
     private function tryCompactFormat(OutboundTransaction $transaction, string $cleanCode): ?array
@@ -73,19 +77,35 @@ class AddScanToOutbound
         if ($len >= $minLenWithLot) {
             $lotNumber = substr($cleanCode, -self::COMPACT_LOT_DIGITS);
             $qty = max(1, (int) substr($cleanCode, -(self::COMPACT_QTY_DIGITS + self::COMPACT_LOT_DIGITS), self::COMPACT_QTY_DIGITS));
-            $productId = (int) substr($cleanCode, 0, $len - (self::COMPACT_QTY_DIGITS + self::COMPACT_LOT_DIGITS));
+            $rawIdStr = substr($cleanCode, 0, $len - (self::COMPACT_QTY_DIGITS + self::COMPACT_LOT_DIGITS));
+            $productId = (int) $rawIdStr;
 
             $product = Product::find($productId);
+
+            // Jika tidak ditemukan, coba strip leading zero (padding Code 128C)
+            if (!$product && str_starts_with($rawIdStr, '0')) {
+                $productId = (int) ltrim($rawIdStr, '0');
+                $product = Product::find($productId);
+            }
+
             if ($product) {
                 return $this->addProduct($transaction, $product, $qty, $lotNumber);
             }
         }
 
         // Legacy format tanpa LOT (misal "4701" = ID 47, qty 01)
-        $productId = (int) substr($cleanCode, 0, $len - self::COMPACT_QTY_DIGITS);
+        $rawIdStr = substr($cleanCode, 0, $len - self::COMPACT_QTY_DIGITS);
         $qty = max(1, (int) substr($cleanCode, -self::COMPACT_QTY_DIGITS));
+        $productId = (int) $rawIdStr;
 
         $product = Product::find($productId);
+
+        // Jika tidak ditemukan, coba strip leading zero (padding Code 128C)
+        if (!$product && str_starts_with($rawIdStr, '0')) {
+            $productId = (int) ltrim($rawIdStr, '0');
+            $product = Product::find($productId);
+        }
+
         if (!$product) {
             // Product ID tidak ditemukan → bukan format kompak,
             // biarkan fallback ke pencarian by kode lama
