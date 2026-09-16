@@ -2,6 +2,7 @@
 
 namespace App\Domain\Stock\Actions;
 
+use App\Domain\Product\Actions\GenerateDynamicLot;
 use App\Domain\Product\Models\Product;
 use App\Domain\Stock\Exceptions\AmbiguousScanException;
 use App\Domain\Stock\Models\OutboundTransaction;
@@ -87,9 +88,13 @@ class AddScanToOutbound
 
         if ($isNew) {
             $item->quantity = $qtyToAdd;
+            $item->lot_number = app(GenerateDynamicLot::class)->handle($product);
             $item->scanned_at = now();
         } else {
             $item->quantity += $qtyToAdd;
+            if (empty($item->lot_number)) {
+                $item->lot_number = app(GenerateDynamicLot::class)->handle($product);
+            }
         }
         $item->save();
 
@@ -130,4 +135,3 @@ class AddScanToOutbound
             ->get();
     }
 }
-

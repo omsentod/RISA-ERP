@@ -12,6 +12,7 @@ class OutboundTransactionItem extends Model
         'outbound_transaction_id',
         'product_id',
         'quantity',
+        'lot_number',
         'scanned_at',
     ];
 

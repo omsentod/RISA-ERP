@@ -60,9 +60,9 @@
                         $cleanNie = trim(preg_replace('/AKD\s*/i', '', $rawNie));
                         $formattedNie = 'AKD ' . $cleanNie;
 
-                        $batchNumber = $product?->default_lot;
+                        $batchNumber = $item->lot_number;
                         if (empty($batchNumber) && $product) {
-                            $batchNumber = app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->handle($product);
+                            $batchNumber = $product->default_lot ?? app(\App\Domain\Product\Actions\GenerateDynamicLot::class)->handle($product);
                         }
                         if (empty($batchNumber)) {
                             $batchNumber = '082607119';

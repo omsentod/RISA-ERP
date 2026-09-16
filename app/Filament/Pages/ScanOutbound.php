@@ -167,6 +167,28 @@ class ScanOutbound extends Page
         $this->refreshTransaction();
     }
 
+    public function updateItemLot(int $itemId, string $lotNumber): void
+    {
+        $item = $this->transaction->items()->find($itemId);
+        if (!$item) {
+            return;
+        }
+
+        $cleanedLot = trim($lotNumber) ?: null;
+        $item->update([
+            'lot_number' => $cleanedLot,
+        ]);
+
+        $this->refreshTransaction();
+
+        Notification::make()
+            ->title('No. Lot diperbarui')
+            ->body("{$item->product->code}: lot diatur ke " . ($cleanedLot ?? '—'))
+            ->success()
+            ->duration(1500)
+            ->send();
+    }
+
     public function removeItem(int $itemId): void
     {
         OutboundTransactionItem::where('id', $itemId)

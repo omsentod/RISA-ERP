@@ -69,6 +69,7 @@
                         <tr>
                             <th class="p-2 text-left font-medium">Kode</th>
                             <th class="p-2 text-left font-medium">Nama Produk</th>
+                            <th class="p-2 text-left font-medium w-44">No. Lot</th>
                             <th class="p-2 text-center font-medium w-32">Qty</th>
                             <th class="p-2 text-right font-medium w-24">Aksi</th>
                         </tr>
@@ -78,6 +79,14 @@
                             <tr class="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                 <td class="p-2 font-mono font-medium">{{ $item->product->code }}</td>
                                 <td class="p-2">{{ $item->product->name }}</td>
+                                <td class="p-2">
+                                    <input type="text"
+                                        value="{{ $item->lot_number }}"
+                                        wire:change="updateItemLot({{ $item->id }}, $event.target.value)"
+                                        placeholder="Contoh: 122609001"
+                                        title="Ubah nomor LOT jika berbeda dengan fisik stiker"
+                                        class="fi-input font-mono text-xs block w-full px-2 py-1 rounded border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                                </td>
                                 <td class="p-2 text-center">
                                     <div class="inline-flex items-center gap-1">
                                         <button wire:click="decrementItemQty({{ $item->id }})"

@@ -61,10 +61,11 @@ class OutboundTransactionResource extends Resource
                 ->schema([
                     Infolists\Components\RepeatableEntry::make('items')
                         ->hiddenLabel()
-                        ->columns(4)
+                        ->columns(5)
                         ->schema([
                             Infolists\Components\TextEntry::make('product.code')->label('Kode')->weight('medium'),
                             Infolists\Components\TextEntry::make('product.name')->label('Nama Produk')->columnSpan(2),
+                            Infolists\Components\TextEntry::make('lot_number')->label('No. Lot')->placeholder('—'),
                             Infolists\Components\TextEntry::make('quantity')->label('Qty')->badge()->color('gray'),
                         ]),
                 ]),

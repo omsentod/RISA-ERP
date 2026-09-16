@@ -200,5 +200,33 @@ class AddScanToOutboundTest extends TestCase
         $this->expectException(RuntimeException::class);
         app(AddScanToOutbound::class)->handle($tx, '9999901');
     }
-}
 
+    public function test_new_scanned_item_is_assigned_lot_number(): void
+    {
+        $product = Product::factory()->create(['code' => 'OF 1010 04', 'product_group_code' => '12']);
+        $tx = $this->makeDraft();
+
+        $result = app(AddScanToOutbound::class)->handle($tx, $product->id . '01');
+
+        $this->assertNotNull($result['item']->lot_number);
+        $this->assertStringStartsWith('12', $result['item']->lot_number);
+        $this->assertDatabaseHas('outbound_transaction_items', [
+            'id' => $result['item']->id,
+            'lot_number' => $result['item']->lot_number,
+        ]);
+    }
+
+    public function test_scanned_item_preserves_custom_lot_number_on_repeated_scan(): void
+    {
+        $product = Product::factory()->create(['code' => 'OF 1010 04']);
+        $tx = $this->makeDraft();
+
+        $result = app(AddScanToOutbound::class)->handle($tx, $product->id . '01');
+        $result['item']->update(['lot_number' => 'CUSTOM-LOT-999']);
+
+        $secondResult = app(AddScanToOutbound::class)->handle($tx, $product->id . '01');
+
+        $this->assertSame(2, $secondResult['item']->quantity);
+        $this->assertSame('CUSTOM-LOT-999', $secondResult['item']->fresh()->lot_number);
+    }
+}
