@@ -42,6 +42,7 @@ class ProductImportParser
                 if ($gol !== null && strlen($gol) === 1) {
                     $gol = '0' . $gol;
                 }
+                $isCustom = $this->parseBoolean($this->clean($row['custom'] ?? $row['produk_custom'] ?? $row['is_custom'] ?? null));
 
                 if ($code === null && $name === null && $spec === null && $nie === null) {
                     continue;
@@ -58,6 +59,7 @@ class ProductImportParser
                         nieNumber: $nie,
                         defaultQuantity: $qty > 0 ? $qty : 1,
                         productGroupCode: $gol,
+                        isCustom: $isCustom,
                         status: ProductImportRow::STATUS_INVALID,
                         errorReason: $code === null ? 'Kolom Kode kosong' : 'Kolom Nama Produk kosong',
                     );
@@ -74,6 +76,7 @@ class ProductImportParser
                     $nie,
                     $resolvedQty,
                     $gol,
+                    $isCustom,
                 );
 
                 $rows[] = new ProductImportRow(
@@ -86,6 +89,7 @@ class ProductImportParser
                     nieNumber: $nie,
                     defaultQuantity: $resolvedQty,
                     productGroupCode: $gol,
+                    isCustom: $isCustom,
                     // Duplikat HANYA jika seluruh kolom sama persis dengan produk existing.
                     // Kode sama tapi ada kolom yang beda → NEW (dibuat sebagai produk baru).
                     status: $exactMatch !== null ? ProductImportRow::STATUS_DUPLICATE : ProductImportRow::STATUS_NEW,
@@ -104,7 +108,7 @@ class ProductImportParser
     {
         return Product::query()
             ->with(['category:id,name', 'registration:id,nie_number'])
-            ->get(['id', 'code', 'name', 'specification', 'default_quantity', 'product_group_code', 'product_category_id', 'registration_id'])
+            ->get(['id', 'code', 'name', 'specification', 'default_quantity', 'is_custom', 'product_group_code', 'product_category_id', 'registration_id'])
             ->groupBy('code')
             ->map(fn ($group) => $group->map(fn (Product $p) => [
                 'code' => $p->code,
@@ -113,6 +117,7 @@ class ProductImportParser
                 'category_name' => $p->category?->name,
                 'nie_number' => $p->registration?->nie_number,
                 'default_quantity' => $p->default_quantity,
+                'is_custom' => (bool) $p->is_custom,
                 'product_group_code' => $p->product_group_code,
             ])->all())
             ->toArray();
@@ -132,6 +137,7 @@ class ProductImportParser
         ?string $nie,
         int $qty,
         ?string $gol,
+        bool $isCustom = false,
     ): ?array {
         foreach ($candidates as $existing) {
             if (
@@ -139,6 +145,7 @@ class ProductImportParser
                 && $spec === ($existing['specification'] ?? null)
                 && $gol === ($existing['product_group_code'] ?? null)
                 && $qty === (int) ($existing['default_quantity'] ?? 1)
+                && (bool) ($existing['is_custom'] ?? false) === $isCustom
                 && $categoryName === (string) ($existing['category_name'] ?? '')
                 && $this->normalizeNie($nie) === $this->normalizeNie($existing['nie_number'] ?? null)
             ) {
@@ -162,5 +169,14 @@ class ProductImportParser
         $trimmed = trim((string) $value);
 
         return $trimmed === '' ? null : $trimmed;
+    }
+
+    private function parseBoolean(?string $value): bool
+    {
+        if ($value === null) {
+            return false;
+        }
+
+        return in_array(strtolower(trim($value)), ['ya', 'yes', '1', 'true', 'y', 'v', 'custom'], true);
     }
 }

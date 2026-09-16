@@ -23,6 +23,7 @@ class Product extends Model
         'name',
         'specification',
         'default_quantity',
+        'is_custom',
         'product_group_code',
         'label_layout',
         'description',
@@ -35,6 +36,7 @@ class Product extends Model
     {
         return [
             'default_quantity' => 'integer',
+            'is_custom' => 'boolean',
             'label_layout' => 'array',
             'is_published' => 'boolean',
             'published_at' => 'datetime',

@@ -13,10 +13,14 @@
         $new = $rows->where('status', ProductImportRow::STATUS_NEW);
         $dup = $rows->where('status', ProductImportRow::STATUS_DUPLICATE);
         $invalid = $rows->where('status', ProductImportRow::STATUS_INVALID);
+        $customCount = $rows->where('isCustom', true)->count();
     @endphp
 
     <div class="flex flex-wrap gap-2 text-xs font-medium">
         <span class="rounded-md bg-success-50 px-2 py-1 text-success-700 dark:bg-success-500/10 dark:text-success-400">{{ $new->count() }} baru</span>
+        @if ($customCount > 0)
+            <span class="rounded-md bg-amber-50 px-2 py-1 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">{{ $customCount }} custom</span>
+        @endif
         <span class="rounded-md bg-warning-50 px-2 py-1 text-warning-700 dark:bg-warning-500/10 dark:text-warning-400">{{ $dup->count() }} sama persis</span>
         <span class="rounded-md bg-danger-50 px-2 py-1 text-danger-700 dark:bg-danger-500/10 dark:text-danger-400">{{ $invalid->count() }} invalid</span>
     </div>
@@ -38,7 +42,12 @@
                     <tbody>
                         @foreach ($dup as $row)
                             <tr class="border-t border-gray-100 dark:border-white/5">
-                                <td class="p-1.5 font-mono">{{ $row->code }}</td>
+                                <td class="p-1.5 font-mono">
+                                    {{ $row->code }}{{ $row->isCustom ? '.' : '' }}
+                                    @if ($row->isCustom)
+                                        <span class="ml-1 text-[9px] px-1 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">Custom</span>
+                                    @endif
+                                </td>
                                 <td class="p-1.5">{{ $row->name }}</td>
                                 <td class="p-1.5 text-gray-500 dark:text-gray-400">{{ $row->categoryName }}</td>
                             </tr>

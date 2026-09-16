@@ -70,7 +70,7 @@
                     @endphp
                     <tr>
                         <td class="col-no">{{ $index + 1 }}</td>
-                        <td class="col-item">{{ $product?->code }}</td>
+                        <td class="col-item">{{ $product?->code }}{{ ($product?->is_custom ?? false) ? '.' : '' }}</td>
                         <td class="col-keterangan">{{ $product?->name }}</td>
                         <td class="col-nie">{{ $formattedNie }}</td>
                         <td class="col-batch">{{ $batchNumber }}</td>

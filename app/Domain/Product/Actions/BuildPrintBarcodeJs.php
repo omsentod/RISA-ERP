@@ -14,6 +14,8 @@ class BuildPrintBarcodeJs
      */
     private const BARCODE_QTY_DIGITS = 2;
 
+    private const BARCODE_LOT_DIGITS = 9;
+
     private const MAX_LABELS_PER_BATCH = 200;
 
     private const BARCODE_WIDTH_THRESHOLD = 6;
@@ -50,8 +52,9 @@ class BuildPrintBarcodeJs
         $products = Product::query()
             ->with(['registration'])
             ->whereIn('id', $ids)
-            ->orderByRaw('FIELD(id,' . implode(',', array_map('intval', $ids)) . ')')
-            ->get();
+            ->get()
+            ->sortBy(fn (Product $p) => array_search($p->id, $ids))
+            ->values();
 
         $labels = $this->renderLabels($products, $itemsMap, $this->resolvePrintDate($yearMonth));
 
@@ -112,7 +115,7 @@ class BuildPrintBarcodeJs
             $duplicateCount = max(1, (int) ($config['duplicate_count'] ?? 0));
             $qtyPerLabel = max(1, (int) ($config['quantity_per_label'] ?? 0) ?: (int) ($p->default_quantity ?? 1));
 
-            $barcodeData = $this->encodeCompactBarcode($p->id, $qtyPerLabel);
+            $barcodeData = $this->encodeCompactBarcode($p->id, $qtyPerLabel, $lot);
             $svg = $this->renderBarcodeSvg($barcodeData);
             $formattedName = $this->formatName->handle($p->name);
             $cleanNie = trim(preg_replace('/AKD\s*/i', '', $p->registration?->nie_number ?? self::NIE_FALLBACK));
@@ -149,14 +152,24 @@ class BuildPrintBarcodeJs
     }
 
     /**
-     * Encode data barcode kompak: product ID + qty 2 digit (pure numerik).
+     * Encode data barcode kompak: product ID + qty 2 digit + nomor LOT 9 digit (pure numerik).
      *
-     * Contoh: ID=47, qty=1 → '4701'  |  ID=123, qty=5 → '12305'
-     * Decode: 2 digit terakhir = qty, sisanya = product ID.
+     * Format: {productId}{qty_2digit}{lot_9digit}
+     * Contoh: ID=47, qty=1, lot="122608099" → "4701122608099" (13 digit)
+     * Decode: 9 digit terakhir = LOT, 2 digit sebelumnya = qty, sisanya = product ID.
      */
-    private function encodeCompactBarcode(int $productId, int $qty): string
+    private function encodeCompactBarcode(int $productId, int $qty, ?string $lot = null): string
     {
-        return $productId . str_pad(min($qty, 99), self::BARCODE_QTY_DIGITS, '0', STR_PAD_LEFT);
+        $base = $productId . str_pad((string) min($qty, 99), self::BARCODE_QTY_DIGITS, '0', STR_PAD_LEFT);
+
+        if ($lot !== null) {
+            $cleanLot = preg_replace('/\D/', '', $lot);
+            if (strlen($cleanLot) === self::BARCODE_LOT_DIGITS) {
+                return $base . $cleanLot;
+            }
+        }
+
+        return $base;
     }
 
     private function renderBarcodeSvg(string $data): string

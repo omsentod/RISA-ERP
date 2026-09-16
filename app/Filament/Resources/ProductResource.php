@@ -88,6 +88,10 @@ class ProductResource extends Resource
                             ->minValue(1)
                             ->required()
                             ->helperText('Jumlah quantity default untuk cetak label.'),
+                        Forms\Components\Toggle::make('is_custom')
+                            ->label('Produk Custom')
+                            ->helperText('Tandai jika produk ini merupakan produk custom. Di Surat Jalan akan otomatis ditambahkan tanda titik pada kolom Item (misal: OF 1076 05LR.).')
+                            ->default(false),
                         Forms\Components\Textarea::make('description')
                             ->label('Deskripsi')
                             ->rows(3)
@@ -151,6 +155,15 @@ class ProductResource extends Resource
                     ->label('QTY')
                     ->sortable()
                     ->toggleable(),
+                Tables\Columns\IconColumn::make('is_custom')
+                    ->label('Custom')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-badge')
+                    ->falseIcon('heroicon-o-minus')
+                    ->trueColor('warning')
+                    ->falseColor('gray')
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\IconColumn::make('is_published')
                     ->label('Website')
                     ->boolean()
@@ -168,6 +181,10 @@ class ProductResource extends Resource
                     ->relationship('registration', 'nie_number')
                     ->searchable()
                     ->preload(),
+                Tables\Filters\TernaryFilter::make('is_custom')
+                    ->label('Tipe Produk')
+                    ->trueLabel('Produk Custom')
+                    ->falseLabel('Produk Standar'),
                 Tables\Filters\TernaryFilter::make('is_published')
                     ->label('Status Publikasi')
                     ->trueLabel('Sudah dipublish')

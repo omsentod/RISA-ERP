@@ -229,4 +229,45 @@ class AddScanToOutboundTest extends TestCase
         $this->assertSame(2, $secondResult['item']->quantity);
         $this->assertSame('CUSTOM-LOT-999', $secondResult['item']->fresh()->lot_number);
     }
+
+    public function test_compact_barcode_with_lot_number_reads_exact_lot_from_barcode(): void
+    {
+        $product = Product::factory()->create(['code' => 'OF 1010 04', 'product_group_code' => '12']);
+        $tx = $this->makeDraft();
+
+        $scannedLot = '122608099';
+        $barcode = $product->id . '01' . $scannedLot;
+
+        $result = app(AddScanToOutbound::class)->handle($tx, $barcode);
+
+        $this->assertSame(1, $result['item']->quantity);
+        $this->assertSame($product->id, $result['item']->product_id);
+        $this->assertSame($scannedLot, $result['item']->lot_number);
+        $this->assertDatabaseHas('outbound_transaction_items', [
+            'id' => $result['item']->id,
+            'lot_number' => $scannedLot,
+            'quantity' => 1,
+        ]);
+    }
+
+    public function test_compact_barcode_with_lot_number_and_custom_qty(): void
+    {
+        $product = Product::factory()->create(['code' => 'OF 1010 04', 'product_group_code' => '12']);
+        $tx = $this->makeDraft();
+
+        // Format: ID + 05 (qty 5) + 122609001 (lot 9 digit)
+        $scannedLot = '122609001';
+        $barcode = $product->id . '05' . $scannedLot;
+
+        $result = app(AddScanToOutbound::class)->handle($tx, $barcode);
+
+        $this->assertSame(5, $result['item']->quantity);
+        $this->assertSame($product->id, $result['item']->product_id);
+        $this->assertSame($scannedLot, $result['item']->lot_number);
+        $this->assertDatabaseHas('outbound_transaction_items', [
+            'id' => $result['item']->id,
+            'lot_number' => $scannedLot,
+            'quantity' => 5,
+        ]);
+    }
 }

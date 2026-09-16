@@ -62,6 +62,7 @@ class ApplyProductImport
                     'name' => $row->name,
                     'specification' => $row->specification,
                     'default_quantity' => $row->defaultQuantity > 0 ? $row->defaultQuantity : 1,
+                    'is_custom' => $row->isCustom,
                     'product_group_code' => $row->productGroupCode,
                 ]);
 

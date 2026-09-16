@@ -24,6 +24,8 @@ class AddScanToOutbound
 
     private const COMPACT_QTY_DIGITS = 2;
 
+    private const COMPACT_LOT_DIGITS = 9;
+
     public function handle(OutboundTransaction $transaction, string $code): array
     {
         if (!$transaction->isDraft()) {
@@ -32,7 +34,7 @@ class AddScanToOutbound
 
         $cleanCode = str_replace(' ', '', $code);
 
-        // 1. Coba format baru (pure angka: product_id + qty 2 digit)
+        // 1. Coba format baru (pure angka: product_id + qty 2 digit [+ lot 9 digit])
         $compactResult = $this->tryCompactFormat($transaction, $cleanCode);
         if ($compactResult !== null) {
             return $compactResult;
@@ -49,7 +51,8 @@ class AddScanToOutbound
 
     /**
      * Coba parse sebagai barcode kompak (pure numerik).
-     * Format: {product_id}{qty_2digit}  — contoh: "4701" = ID 47, qty 01.
+     * Format dengan LOT: {product_id}{qty_2digit}{lot_9digit} — contoh: "4701122608099" (13 digit)
+     * Format tanpa LOT (legacy): {product_id}{qty_2digit} — contoh: "4701" (4 digit)
      *
      * Return null jika bukan format kompak atau product ID tidak ditemukan.
      */
@@ -64,6 +67,21 @@ class AddScanToOutbound
             return null;
         }
 
+        // Format barcode dengan LOT: minimal 1 digit ID + 2 digit qty + 9 digit LOT = 12 digit
+        $minLenWithLot = self::COMPACT_QTY_DIGITS + self::COMPACT_LOT_DIGITS + 1;
+
+        if ($len >= $minLenWithLot) {
+            $lotNumber = substr($cleanCode, -self::COMPACT_LOT_DIGITS);
+            $qty = max(1, (int) substr($cleanCode, -(self::COMPACT_QTY_DIGITS + self::COMPACT_LOT_DIGITS), self::COMPACT_QTY_DIGITS));
+            $productId = (int) substr($cleanCode, 0, $len - (self::COMPACT_QTY_DIGITS + self::COMPACT_LOT_DIGITS));
+
+            $product = Product::find($productId);
+            if ($product) {
+                return $this->addProduct($transaction, $product, $qty, $lotNumber);
+            }
+        }
+
+        // Legacy format tanpa LOT (misal "4701" = ID 47, qty 01)
         $productId = (int) substr($cleanCode, 0, $len - self::COMPACT_QTY_DIGITS);
         $qty = max(1, (int) substr($cleanCode, -self::COMPACT_QTY_DIGITS));
 
@@ -77,7 +95,7 @@ class AddScanToOutbound
         return $this->addProduct($transaction, $product, $qty);
     }
 
-    public function addProduct(OutboundTransaction $transaction, Product $product, int $qtyToAdd): array
+    public function addProduct(OutboundTransaction $transaction, Product $product, int $qtyToAdd, ?string $lotNumber = null): array
     {
         if (!$transaction->isDraft()) {
             throw new RuntimeException('Transaksi sudah selesai / dibatalkan, tidak bisa tambah item lagi.');
@@ -88,12 +106,12 @@ class AddScanToOutbound
 
         if ($isNew) {
             $item->quantity = $qtyToAdd;
-            $item->lot_number = app(GenerateDynamicLot::class)->handle($product);
+            $item->lot_number = $lotNumber ?: app(GenerateDynamicLot::class)->handle($product);
             $item->scanned_at = now();
         } else {
             $item->quantity += $qtyToAdd;
             if (empty($item->lot_number)) {
-                $item->lot_number = app(GenerateDynamicLot::class)->handle($product);
+                $item->lot_number = $lotNumber ?: app(GenerateDynamicLot::class)->handle($product);
             }
         }
         $item->save();

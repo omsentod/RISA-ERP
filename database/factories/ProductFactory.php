@@ -19,10 +19,18 @@ class ProductFactory extends Factory
             'code' => fake()->unique()->bothify('OF #### ??'),
             'name' => fake()->words(4, true) . ' ' . fake()->numberBetween(2, 20) . ' Holes',
             'description' => null,
+            'is_custom' => false,
             'is_published' => false,
             'published_at' => null,
             'published_by' => null,
         ];
+    }
+
+    public function custom(): static
+    {
+        return $this->state([
+            'is_custom' => true,
+        ]);
     }
 
     public function published(): static

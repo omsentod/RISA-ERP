@@ -77,7 +77,12 @@
                     <tbody>
                         @foreach ($items as $item)
                             <tr class="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                <td class="p-2 font-mono font-medium">{{ $item->product->code }}</td>
+                                <td class="p-2 font-mono font-medium">
+                                    {{ $item->product->code }}{{ $item->product->is_custom ? '.' : '' }}
+                                    @if ($item->product->is_custom)
+                                        <span class="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 font-sans font-normal">Custom</span>
+                                    @endif
+                                </td>
                                 <td class="p-2">{{ $item->product->name }}</td>
                                 <td class="p-2">
                                     <input type="text"
@@ -139,7 +144,12 @@
                 <button type="button"
                     wire:click="pickProduct({{ $candidate['id'] }})"
                     class="flex flex-col items-start gap-0.5 p-3 text-left border rounded-lg border-gray-200 dark:border-gray-700 hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10">
-                    <span class="font-mono font-medium text-sm">{{ $candidate['code'] }}</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-mono font-medium text-sm">{{ $candidate['code'] }}{{ !empty($candidate['is_custom']) ? '.' : '' }}</span>
+                        @if (!empty($candidate['is_custom']))
+                            <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 font-sans font-normal">Custom</span>
+                        @endif
+                    </div>
                     <span class="text-sm text-gray-700 dark:text-gray-300">{{ $candidate['name'] }}</span>
                     @if (!empty($candidate['specification']))
                         <span class="text-xs text-gray-500 dark:text-gray-400">{{ $candidate['specification'] }}</span>
