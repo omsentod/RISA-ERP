@@ -133,6 +133,7 @@ class ScanOutbound extends Page
         $this->refreshTransaction();
 
         ['item' => $item, 'isNew' => $isNew, 'qtyAdded' => $qtyAdded] = $result;
+        $lotChanged = $result['lotChanged'] ?? false;
 
         Notification::make()
             ->title($isNew ? 'Item ditambahkan' : 'Qty di-update')
@@ -140,6 +141,16 @@ class ScanOutbound extends Page
             ->success()
             ->duration(2000)
             ->send();
+
+        // Notifikasi khusus jika LOT otomatis diganti ke yang lebih lama
+        if ($lotChanged) {
+            Notification::make()
+                ->title('No. Lot diperbarui otomatis')
+                ->body("{$item->product->code}: lot diubah ke {$item->lot_number} (stok lebih lama diprioritaskan)")
+                ->warning()
+                ->duration(4000)
+                ->send();
+        }
     }
 
     public function incrementItemQty(int $itemId): void

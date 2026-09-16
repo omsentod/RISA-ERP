@@ -86,6 +86,7 @@
                                 <td class="p-2">{{ $item->product->name }}</td>
                                 <td class="p-2">
                                     <input type="text"
+                                        wire:key="lot-{{ $item->id }}-{{ $item->lot_number }}"
                                         value="{{ $item->lot_number }}"
                                         wire:change="updateItemLot({{ $item->id }}, $event.target.value)"
                                         placeholder="Contoh: 122609001"

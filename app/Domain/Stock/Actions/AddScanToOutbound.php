@@ -123,6 +123,7 @@ class AddScanToOutbound
 
         $item = $transaction->items()->firstOrNew(['product_id' => $product->id]);
         $isNew = !$item->exists;
+        $lotChanged = false;
 
         if ($isNew) {
             $item->quantity   = $qtyToAdd;
@@ -131,11 +132,12 @@ class AddScanToOutbound
         } else {
             $item->quantity += $qtyToAdd;
 
-            // Jika ada LOT baru yang lebih lama (tanggal produksi lebih awal),
+            // Jika ada LOT baru yang lebih lama (tanggal+seq produksi lebih awal),
             // ganti LOT menjadi yang paling lama (FIFO: stok terlama keluar duluan).
             $resolvedLot = $lotNumber ?: app(GenerateDynamicLot::class)->handle($product);
             if ($this->isLotOlder($resolvedLot, $item->lot_number)) {
                 $item->lot_number = $resolvedLot;
+                $lotChanged = true;
             } elseif (empty($item->lot_number)) {
                 $item->lot_number = $resolvedLot;
             }
@@ -145,20 +147,25 @@ class AddScanToOutbound
         $transaction->recalculateTotalQty();
 
         return [
-            'item'     => $item->fresh(['product']),
-            'isNew'    => $isNew,
-            'product'  => $product,
-            'qtyAdded' => $qtyToAdd,
+            'item'       => $item->fresh(['product']),
+            'isNew'      => $isNew,
+            'product'    => $product,
+            'qtyAdded'   => $qtyToAdd,
+            'lotChanged' => $lotChanged,
         ];
     }
 
     /**
-     * Bandingkan dua LOT number berdasarkan tanggal produksi (YYMM) yang tertanam di dalamnya.
+     * Bandingkan dua LOT number berdasarkan tanggal + urutan produksi yang tertanam di dalamnya.
      *
      * Format LOT: {groupCode(2)}{YY(2)}{MM(2)}{seq(3)} = 9 digit
-     * Porsi tanggal ada di indeks 2–5 (YYMM).
+     * Porsi tanggal+seq ada di indeks 2–8 (YYMMSEQ = 7 digit).
+     * Membandingkan 7 digit sekaligus memastikan LOT bulan sama tapi seq lebih kecil
+     * (dicetak lebih dulu) juga dianggap lebih lama.
      *
-     * Return true jika $candidate lebih LAMA (tanggal lebih awal) dari $current.
+     * Contoh: 022609161 vs 022609163 → 2609161 < 2609163 → 161 lebih lama ✓
+     *
+     * Return true jika $candidate lebih LAMA (lebih awal) dari $current.
      * Jika salah satu null/kosong/tidak valid, return false (tidak mengganti).
      */
     private function isLotOlder(?string $candidate, ?string $current): bool
@@ -167,16 +174,16 @@ class AddScanToOutbound
             return false;
         }
 
-        // Ambil YYMM dari posisi 2–5 (0-indexed)
-        $candidateYYMM = substr(preg_replace('/\D/', '', $candidate), 2, 4);
-        $currentYYMM   = substr(preg_replace('/\D/', '', $current), 2, 4);
+        // Ambil YYMMSEQ dari posisi 2 (0-indexed), panjang 7 digit
+        $candidateDateSeq = substr(preg_replace('/\D/', '', $candidate), 2, 7);
+        $currentDateSeq   = substr(preg_replace('/\D/', '', $current), 2, 7);
 
-        // Harus tepat 4 digit agar perbandingan valid
-        if (strlen($candidateYYMM) !== 4 || strlen($currentYYMM) !== 4) {
+        // Harus tepat 7 digit agar perbandingan valid
+        if (strlen($candidateDateSeq) !== 7 || strlen($currentDateSeq) !== 7) {
             return false;
         }
 
-        return (int) $candidateYYMM < (int) $currentYYMM;
+        return (int) $candidateDateSeq < (int) $currentDateSeq;
     }
 
     private function applyScan(OutboundTransaction $transaction, string $sku, int $qtyToAdd, string $originalCode): array
