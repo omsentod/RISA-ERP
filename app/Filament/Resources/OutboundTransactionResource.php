@@ -63,10 +63,7 @@ class OutboundTransactionResource extends Resource
                         ->hiddenLabel()
                         ->columns(5)
                         ->schema([
-                            Infolists\Components\TextEntry::make('product.code')
-                                ->label('Kode')
-                                ->weight('medium')
-                                ->formatStateUsing(fn ($state, $record) => $state . ($record?->product?->is_custom ? '.' : '')),
+                            Infolists\Components\TextEntry::make('product.code')->label('Kode')->weight('medium'),
                             Infolists\Components\TextEntry::make('product.name')->label('Nama Produk')->columnSpan(2),
                             Infolists\Components\TextEntry::make('lot_number')->label('No. Lot')->placeholder('—'),
                             Infolists\Components\TextEntry::make('quantity')->label('Qty')->badge()->color('gray'),

@@ -33,7 +33,9 @@ class ProductImportParser
 
             foreach ($sheetRows as $index => $row) {
                 $rowNumber = $index + 2;
-                $code = $this->clean($row['kode'] ?? null);
+                $rawCode = $this->clean($row['kode'] ?? null);
+                $codeHasDot = $rawCode !== null && str_ends_with($rawCode, '.');
+                $code = $rawCode !== null ? rtrim($rawCode, '.') : null;
                 $name = $this->clean($row['nama_produk'] ?? null);
                 $spec = $this->clean($row['spesifikasi'] ?? null);
                 $nie = $this->clean($row['nie'] ?? null);
@@ -42,7 +44,7 @@ class ProductImportParser
                 if ($gol !== null && strlen($gol) === 1) {
                     $gol = '0' . $gol;
                 }
-                $isCustom = $this->parseBoolean($this->clean($row['custom'] ?? $row['produk_custom'] ?? $row['is_custom'] ?? null));
+                $isCustom = $this->parseBoolean($this->clean($row['custom'] ?? $row['produk_custom'] ?? $row['is_custom'] ?? null)) || $codeHasDot;
 
                 if ($code === null && $name === null && $spec === null && $nie === null) {
                     continue;

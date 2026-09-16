@@ -78,7 +78,7 @@
                         @foreach ($items as $item)
                             <tr class="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                 <td class="p-2 font-mono font-medium">
-                                    {{ $item->product->code }}{{ $item->product->is_custom ? '.' : '' }}
+                                    {{ $item->product->code }}
                                     @if ($item->product->is_custom)
                                         <span class="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 font-sans font-normal">Custom</span>
                                     @endif
@@ -145,7 +145,7 @@
                     wire:click="pickProduct({{ $candidate['id'] }})"
                     class="flex flex-col items-start gap-0.5 p-3 text-left border rounded-lg border-gray-200 dark:border-gray-700 hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10">
                     <div class="flex items-center gap-1.5">
-                        <span class="font-mono font-medium text-sm">{{ $candidate['code'] }}{{ !empty($candidate['is_custom']) ? '.' : '' }}</span>
+                        <span class="font-mono font-medium text-sm">{{ $candidate['code'] }}</span>
                         @if (!empty($candidate['is_custom']))
                             <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 font-sans font-normal">Custom</span>
                         @endif

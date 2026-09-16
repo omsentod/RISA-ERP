@@ -133,11 +133,10 @@ class ScanOutbound extends Page
         $this->refreshTransaction();
 
         ['item' => $item, 'isNew' => $isNew, 'qtyAdded' => $qtyAdded] = $result;
-        $displayCode = $item->product->code . ($item->product->is_custom ? '.' : '');
 
         Notification::make()
             ->title($isNew ? 'Item ditambahkan' : 'Qty di-update')
-            ->body("{$displayCode} — qty sekarang {$item->quantity} (+{$qtyAdded} pcs)")
+            ->body("{$item->product->code} — qty sekarang {$item->quantity} (+{$qtyAdded} pcs)")
             ->success()
             ->duration(2000)
             ->send();

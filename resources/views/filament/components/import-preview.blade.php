@@ -43,7 +43,7 @@
                         @foreach ($dup as $row)
                             <tr class="border-t border-gray-100 dark:border-white/5">
                                 <td class="p-1.5 font-mono">
-                                    {{ $row->code }}{{ $row->isCustom ? '.' : '' }}
+                                    {{ $row->code }}
                                     @if ($row->isCustom)
                                         <span class="ml-1 text-[9px] px-1 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">Custom</span>
                                     @endif
