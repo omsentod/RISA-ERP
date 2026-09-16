@@ -14,6 +14,14 @@ class GenerateBarcode
         return $generator->getBarcode($code, BarcodeGeneratorSVG::TYPE_CODE_128, $widthFactor, $height);
     }
 
+ 
+    public function svgCode128C(string $code, int $widthFactor = 2, int $height = 60): string
+    {
+        $generator = new BarcodeGeneratorSVG;
+
+        return $generator->getBarcode($code, BarcodeGeneratorSVG::TYPE_CODE_128_C, $widthFactor, $height);
+    }
+
     public function pngDataUri(string $code, int $widthFactor = 2, int $height = 60): string
     {
         $generator = new BarcodeGeneratorPNG;
