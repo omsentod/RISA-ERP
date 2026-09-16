@@ -10,6 +10,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\TrashedFilter;
@@ -185,6 +186,24 @@ class OutboundTransactionResource extends Resource
                     ->color('warning')
                     ->visible(fn (OutboundTransaction $record) => $record->isDraft())
                     ->url(fn (OutboundTransaction $record) => ScanOutbound::getUrl(['transaction' => $record->id])),
+                Tables\Actions\Action::make('reopenSession')
+                    ->label('Buka Kembali')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('warning')
+                    ->visible(fn (OutboundTransaction $record) => $record->isCompleted())
+                    ->requiresConfirmation()
+                    ->modalHeading('Buka Kembali Surat Jalan')
+                    ->modalDescription('SJ akan dikembalikan ke status Draft sehingga bisa diedit kembali melalui scan. Lanjutkan?')
+                    ->modalSubmitActionLabel('Ya, Buka Kembali')
+                    ->action(function (OutboundTransaction $record) {
+                        $record->reopenSession();
+
+                        Notification::make()
+                            ->title('SJ dibuka kembali')
+                            ->body("Surat Jalan {$record->doc_no} kembali ke status Draft.")
+                            ->success()
+                            ->send();
+                    }),
                 Tables\Actions\Action::make('printSuratJalan')
                     ->label('Cetak SJ')
                     ->icon('heroicon-o-printer')
@@ -241,6 +260,7 @@ class OutboundTransactionResource extends Resource
             'index' => Pages\ListOutboundTransactions::route('/'),
             'view' => Pages\ViewOutboundTransaction::route('/{record}'),
             'edit' => Pages\EditOutboundTransaction::route('/{record}/edit'),
+            'edit-items' => Pages\EditOutboundItems::route('/{record}/edit-items'),
         ];
     }
 }

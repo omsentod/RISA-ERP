@@ -72,6 +72,15 @@ class OutboundTransaction extends Model
         return $this->status === self::STATUS_CANCELLED;
     }
 
+    public function reopenSession(?int $userId = null): void
+    {
+        $this->update([
+            'status' => self::STATUS_DRAFT,
+            'completed_at' => null,
+            'updated_by' => $userId ?? auth()->id(),
+        ]);
+    }
+
     public function recalculateTotalQty(): void
     {
         $this->total_qty = (int) $this->items()->sum('quantity');
