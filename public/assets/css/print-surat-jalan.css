@@ -27,6 +27,27 @@ html, body {
     padding: 0;
     page-break-inside: avoid;
     break-inside: avoid;
+    page-break-after: always;
+    break-after: page;
+}
+
+.page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+}
+
+@media screen {
+    body {
+        background: #f1f5f9;
+        padding: 10mm 0;
+    }
+
+    .page {
+        background: #fff;
+        margin-bottom: 10mm;
+        padding: 5mm 8mm;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
 }
 
 /* TOP HEADER */
@@ -60,6 +81,13 @@ html, body {
 
 .meta-info .doc-no {
     margin-bottom: 0.5mm;
+}
+
+.meta-info .page-no {
+    font-size: 10.5pt;
+    font-weight: normal;
+    margin-top: 0.5mm;
+    color: #222;
 }
 
 /* TITLE */
@@ -206,14 +234,24 @@ table.ncr-table td.total-value {
         width: auto !important;
         margin: 0 !important;
         padding: 0 !important;
+        background: #fff !important;
     }
 
     .page {
         width: 100% !important;
         max-width: 100% !important;
+        margin: 0 !important;
         padding: 0 !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        box-shadow: none !important;
+    }
+
+    .page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
     }
 
     .signature-section {
