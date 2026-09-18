@@ -5,8 +5,8 @@
     $totalQty = (int) $items->sum('quantity');
     $docDate = $transaction->doc_date ?? now();
 
-    // Chunk items into pages (25 items per page for clean NCR continuous form fit)
-    $itemsPerPage = 25;
+    // Chunk items into pages (40 items per page for clean NCR continuous form fit)
+    $itemsPerPage = 40;
     $chunks = $items->chunk($itemsPerPage);
     if ($chunks->isEmpty()) {
         $chunks = collect([collect()]);
