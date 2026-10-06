@@ -130,8 +130,9 @@ class ImportProduct extends Page implements HasForms
         Notification::make()
             ->title('Import selesai')
             ->body(sprintf(
-                '%d ditambah, %d di-skip, %d invalid',
+                '%d ditambah, %d di-update, %d di-skip, %d invalid',
                 $summary['inserted'],
+                $summary['updated'] ?? 0,
                 $summary['skipped'],
                 $summary['invalid']
             ))
@@ -147,7 +148,7 @@ class ImportProduct extends Page implements HasForms
         $this->uploadedPath = null;
         $this->rows = [];
         $this->result = null;
-        $this->duplicateStrategy = 'skip';
+        $this->duplicateStrategy = 'update_existing';
         $this->step = 'upload';
         $this->form->fill();
     }
@@ -173,16 +174,18 @@ class ImportProduct extends Page implements HasForms
         $new = 0;
         $duplicate = 0;
         $invalid = 0;
+        $update = 0;
         foreach ($this->rows as $row) {
             match ($row['status']) {
                 ProductImportRow::STATUS_NEW => $new++,
                 ProductImportRow::STATUS_DUPLICATE => $duplicate++,
+                ProductImportRow::STATUS_UPDATE => $update++,
                 ProductImportRow::STATUS_INVALID => $invalid++,
                 default => null,
             };
         }
 
-        return compact('new', 'duplicate', 'invalid');
+        return compact('new', 'duplicate', 'invalid', 'update');
     }
 
     public function getRowsByStatus(string $status): array

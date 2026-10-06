@@ -43,16 +43,21 @@
 
     {{-- STEP 2: PREVIEW --}}
     @if ($step === 'preview')
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <x-filament::section>
                 <div class="text-sm text-gray-500 dark:text-gray-400">Baris Baru</div>
                 <div class="text-3xl font-bold text-success-600 dark:text-success-400">{{ $stats['new'] }}</div>
                 <div class="text-xs text-gray-500 mt-1">Akan di-insert</div>
             </x-filament::section>
             <x-filament::section>
-                <div class="text-sm text-gray-500 dark:text-gray-400">Duplikat (Kode sudah ada)</div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">Diupdate (Kode Sama)</div>
+                <div class="text-3xl font-bold text-info-600 dark:text-info-400">{{ $stats['update'] ?? 0 }}</div>
+                <div class="text-xs text-gray-500 mt-1">Akan memperbarui data existing</div>
+            </x-filament::section>
+            <x-filament::section>
+                <div class="text-sm text-gray-500 dark:text-gray-400">Duplikat Identik</div>
                 <div class="text-3xl font-bold text-warning-600 dark:text-warning-400">{{ $stats['duplicate'] }}</div>
-                <div class="text-xs text-gray-500 mt-1">Perlu keputusan: buat baru / skip</div>
+                <div class="text-xs text-gray-500 mt-1">Sama persis dengan sistem</div>
             </x-filament::section>
             <x-filament::section>
                 <div class="text-sm text-gray-500 dark:text-gray-400">Baris Invalid</div>
@@ -61,21 +66,29 @@
             </x-filament::section>
         </div>
 
-        {{-- Duplicate resolution --}}
-        @if ($stats['duplicate'] > 0)
+        {{-- Duplicate / Update resolution --}}
+        @if (($stats['duplicate'] + ($stats['update'] ?? 0)) > 0)
             <x-filament::section>
-                <x-slot name="heading">Keputusan untuk Baris Duplikat</x-slot>
+                <x-slot name="heading">Keputusan untuk Data dengan Kode yang Sudah Ada</x-slot>
                 <x-slot name="description">
-                    Ada {{ $stats['duplicate'] }} baris di file yang Kode-nya sudah ada di sistem. Pilih perilaku:
+                    Ada {{ $stats['duplicate'] + ($stats['update'] ?? 0) }} baris di file yang Kode-nya sudah ada di sistem. Pilih perilaku:
                 </x-slot>
 
                 <div class="flex flex-col sm:flex-row gap-3">
                     <label class="flex items-start gap-2 p-3 border rounded-md cursor-pointer flex-1 dark:border-gray-700"
+                           :class="'{{ $duplicateStrategy }}' === 'update_existing' ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10' : ''">
+                        <input type="radio" wire:model.live="duplicateStrategy" value="update_existing" class="mt-1">
+                        <div>
+                            <div class="font-medium">Update Atribut</div>
+                            <div class="text-xs text-gray-500">Perbarui spesifikasi, nama, dll. Sangat disarankan agar riwayat Surat Jalan aman.</div>
+                        </div>
+                    </label>
+                    <label class="flex items-start gap-2 p-3 border rounded-md cursor-pointer flex-1 dark:border-gray-700"
                            :class="'{{ $duplicateStrategy }}' === 'skip' ? 'border-primary-500 bg-primary-50 dark:bg-primary-500/10' : ''">
                         <input type="radio" wire:model.live="duplicateStrategy" value="skip" class="mt-1">
                         <div>
-                            <div class="font-medium">Skip duplikat</div>
-                            <div class="text-xs text-gray-500">Data existing tidak diubah. Baru insert baris yang benar-benar baru.</div>
+                            <div class="font-medium">Skip duplikat / perubahan</div>
+                            <div class="text-xs text-gray-500">Data existing tidak diubah. Hanya insert baris yang benar-benar baru.</div>
                         </div>
                     </label>
                     <label class="flex items-start gap-2 p-3 border rounded-md cursor-pointer flex-1 dark:border-gray-700"
@@ -90,7 +103,7 @@
             </x-filament::section>
 
             <x-filament::section collapsible collapsed>
-                <x-slot name="heading">Detail Duplikat ({{ $stats['duplicate'] }} baris) — perbandingan existing vs baru</x-slot>
+                <x-slot name="heading">Detail Perbandingan Data ({{ $stats['duplicate'] + ($stats['update'] ?? 0) }} baris) — existing vs file</x-slot>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm border-collapse">
                         <thead class="bg-gray-100 dark:bg-gray-800">
@@ -102,7 +115,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($this->getRowsByStatus('duplicate') as $row)
+                            @foreach (array_merge($this->getRowsByStatus('update'), $this->getRowsByStatus('duplicate')) as $row)
                                 @php
                                     $comparisons = [
                                         'Nama Produk' => [$row['existing_data']['name'] ?? '—', $row['name']],
@@ -168,7 +181,7 @@
                 wire:confirm="Yakin apply import? Perubahan tidak bisa di-undo otomatis."
                 icon="heroicon-o-check"
                 color="success">
-                Konfirmasi Import ({{ $stats['new'] }} baru, {{ $duplicateStrategy === 'create_new' ? $stats['duplicate'].' buat baru' : $stats['duplicate'].' skip' }})
+                Konfirmasi Import ({{ $stats['new'] }} baru, {{ ($stats['update'] ?? 0) }} update, {{ $duplicateStrategy === 'create_new' ? $stats['duplicate'].' buat baru' : $stats['duplicate'].' skip' }})
             </x-filament::button>
             <x-filament::button wire:click="resetImport" color="gray" icon="heroicon-o-x-mark">
                 Batal / Upload Ulang
@@ -180,10 +193,14 @@
     @if ($step === 'done' && $result)
         <x-filament::section>
             <x-slot name="heading">Import Selesai</x-slot>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div class="p-3 rounded bg-success-50 dark:bg-success-500/10">
                     <div class="text-xs text-gray-500">Ditambah</div>
                     <div class="text-2xl font-bold text-success-600 dark:text-success-400">{{ $result['inserted'] }}</div>
+                </div>
+                <div class="p-3 rounded bg-info-50 dark:bg-info-500/10">
+                    <div class="text-xs text-gray-500">Diupdate</div>
+                    <div class="text-2xl font-bold text-info-600 dark:text-info-400">{{ $result['updated'] ?? 0 }}</div>
                 </div>
                 <div class="p-3 rounded bg-gray-100 dark:bg-gray-800">
                     <div class="text-xs text-gray-500">Di-skip</div>

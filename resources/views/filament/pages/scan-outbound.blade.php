@@ -76,14 +76,14 @@
                     </thead>
                     <tbody>
                         @foreach ($items as $item)
-                            <tr class="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                            <tr wire:key="scan-item-{{ $item->id }}" class="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                                 <td class="p-2 font-mono font-medium">
-                                    {{ $item->product->code }}
-                                    @if ($item->product->is_custom)
+                                    {{ $item->product?->code ?? '[ID: ' . $item->product_id . ']' }}
+                                    @if ($item->product?->is_custom)
                                         <span class="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 font-sans font-normal">Custom</span>
                                     @endif
                                 </td>
-                                <td class="p-2">{{ $item->product->name }}</td>
+                                <td class="p-2">{{ $item->product?->name ?? 'Produk tidak ditemukan di master data' }}</td>
                                 <td class="p-2">
                                     <input type="text"
                                         wire:key="lot-{{ $item->id }}-{{ $item->lot_number }}"
@@ -95,18 +95,18 @@
                                 </td>
                                 <td class="p-2 text-center">
                                     <div class="inline-flex items-center gap-1">
-                                        <button wire:click="decrementItemQty({{ $item->id }})"
+                                        <button type="button" wire:click="decrementItemQty({{ $item->id }})"
                                             class="w-7 h-7 flex items-center justify-center rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
                                             title="Kurangi">−</button>
                                         <span class="min-w-[2rem] text-center font-semibold">{{ $item->quantity }}</span>
-                                        <button wire:click="incrementItemQty({{ $item->id }})"
+                                        <button type="button" wire:click="incrementItemQty({{ $item->id }})"
                                             class="w-7 h-7 flex items-center justify-center rounded-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
                                             title="Tambah">+</button>
                                     </div>
                                 </td>
                                 <td class="p-2 text-right">
-                                    <button wire:click="removeItem({{ $item->id }})"
-                                        wire:confirm="Hapus {{ $item->product->code }} dari daftar?"
+                                    <button type="button" wire:click="removeItem({{ $item->id }})"
+                                        wire:confirm="Hapus {{ $item->product?->code ?? 'item ini' }} dari daftar?"
                                         class="text-danger-600 dark:text-danger-400 hover:underline text-xs">Hapus</button>
                                 </td>
                             </tr>

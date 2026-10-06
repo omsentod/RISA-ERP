@@ -13,29 +13,35 @@ class ApplyProductImport
 {
     /**
      * @param array<int, ProductImportRow> $rows
-     * @param string $duplicateStrategy one of: create_new, skip
-     * @return array{inserted:int, skipped:int, invalid:int}
+     * @param string $duplicateStrategy one of: create_new, skip, update_existing
+     * @return array{inserted:int, updated:int, skipped:int, invalid:int}
      */
     public function handle(array $rows, string $duplicateStrategy): array
     {
         $inserted = 0;
+        $updated = 0;
         $skipped = 0;
         $invalid = 0;
 
-        DB::transaction(function () use ($rows, $duplicateStrategy, &$inserted, &$skipped, &$invalid) {
+        DB::transaction(function () use ($rows, $duplicateStrategy, &$inserted, &$updated, &$skipped, &$invalid) {
             $categoryCache = [];
             $registrationCache = [];
 
             foreach ($rows as $row) {
                 if ($row->status === ProductImportRow::STATUS_INVALID) {
                     $invalid++;
-
                     continue;
                 }
 
-                if ($row->status === ProductImportRow::STATUS_DUPLICATE && $duplicateStrategy === 'skip') {
-                    $skipped++;
+                if ($row->status === ProductImportRow::STATUS_DUPLICATE) {
+                    if ($duplicateStrategy === 'skip' || $duplicateStrategy === 'update_existing') {
+                        $skipped++;
+                        continue;
+                    }
+                }
 
+                if ($row->status === ProductImportRow::STATUS_UPDATE && $duplicateStrategy === 'skip') {
+                    $skipped++;
                     continue;
                 }
 
@@ -55,7 +61,7 @@ class ApplyProductImport
                     )->id;
                 }
 
-                Product::create([
+                $attributes = [
                     'code' => $row->code,
                     'product_category_id' => $categoryId,
                     'registration_id' => $registrationId,
@@ -64,12 +70,29 @@ class ApplyProductImport
                     'default_quantity' => $row->defaultQuantity > 0 ? $row->defaultQuantity : 1,
                     'is_custom' => $row->isCustom,
                     'product_group_code' => $row->productGroupCode,
-                ]);
+                ];
 
+                if (
+                    $row->status === ProductImportRow::STATUS_UPDATE
+                    && $duplicateStrategy === 'update_existing'
+                    && !empty($row->existingData['id'])
+                ) {
+                    $product = Product::withTrashed()->find($row->existingData['id']);
+                    if ($product) {
+                        $product->update($attributes);
+                        if ($product->trashed()) {
+                            $product->restore();
+                        }
+                        $updated++;
+                        continue;
+                    }
+                }
+
+                Product::create($attributes);
                 $inserted++;
             }
         });
 
-        return compact('inserted', 'skipped', 'invalid');
+        return compact('inserted', 'updated', 'skipped', 'invalid');
     }
 }

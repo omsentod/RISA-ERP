@@ -67,10 +67,40 @@ class AddScanToOutbound
         }
 
         $len = strlen($cleanCode);
+
+        // --- NEW EAN-13 CUSTOM DECODER ---
+        // Jika 13 digit, maka ini adalah format kompresi EAN-13 kita:
+        // Format Payload (12 digit): [ID:4][QTY:2][YM:3][SEQ:3] + Checksum(1)
+        if ($len === 13) {
+            $payload = substr($cleanCode, 0, 12);
+            $productId = (int) substr($payload, 0, 4);
+            $qty = (int) substr($payload, 4, 2);
+            $ym = (int) substr($payload, 6, 3);
+            $seq = substr($payload, 9, 3);
+
+            $product = Product::find($productId);
+            if ($product && $ym > 0) {
+                // Reconstruct LOT: {groupCode(2)}{YY(2)}{MM(2)}{seq(3)}
+                $year = 2024 + (int) floor(($ym - 1) / 12);
+                $month = ($ym - 1) % 12 + 1;
+                $yy = substr((string) $year, -2);
+                $mm = str_pad((string) $month, 2, '0', STR_PAD_LEFT);
+                
+                $rawGroupCode = (string) ($product->product_group_code ?? '00');
+                $cleanGroupCode = preg_replace('/[^0-9]/', '', $rawGroupCode);
+                $groupCode = str_pad(substr($cleanGroupCode, 0, 2), 2, '0', STR_PAD_LEFT);
+                
+                $lotNumber = $groupCode . $yy . $mm . $seq;
+
+                return $this->addProduct($transaction, $product, $qty, $lotNumber);
+            }
+        }
+
         if ($len < 3) {
             return null;
         }
 
+        // --- OLD CODE 128C DECODER (Kompabilitas Barcode Lama) ---
         // Format barcode dengan LOT: minimal 1 digit ID + 2 digit qty + 9 digit LOT = 12 digit
         $minLenWithLot = self::COMPACT_QTY_DIGITS + self::COMPACT_LOT_DIGITS + 1;
 

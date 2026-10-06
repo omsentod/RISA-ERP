@@ -62,6 +62,10 @@ class OutboundTransactionResource extends Resource
                 ->schema([
                     Infolists\Components\RepeatableEntry::make('items')
                         ->hiddenLabel()
+                        ->getStateUsing(fn ($record) => $record->items->sortBy(
+                            fn ($item) => $item->product?->code ?? '',
+                            SORT_NATURAL | SORT_FLAG_CASE
+                        )->values())
                         ->columns(5)
                         ->schema([
                             Infolists\Components\TextEntry::make('product.code')->label('Kode')->weight('medium'),
