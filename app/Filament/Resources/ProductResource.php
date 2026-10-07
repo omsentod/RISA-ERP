@@ -463,7 +463,6 @@ class ProductResource extends Resource
         $normalized = preg_replace('/\s+/', ' ', $trimmed);
         $stripped = preg_replace('/\s+/', '', $trimmed);
 
-        // 1. Direct phrase or SKU match
         $phraseQuery = (clone $query)->where(function (Builder $q) use ($normalized, $stripped) {
             $q->where('code', 'like', "%{$normalized}%")
                 ->orWhere('name', 'like', "%{$normalized}%")
@@ -498,7 +497,6 @@ class ProductResource extends Resource
             });
         }
 
-        // 2. Multi-word search (non-contiguous words, e.g. 'Onethird Hole 4')
         $words = array_filter(
             explode(' ', $normalized),
             fn ($w) => filled($w) && $w !== '-'
@@ -512,7 +510,6 @@ class ProductResource extends Resource
             foreach ($words as $word) {
                 if (ctype_digit($word) && strlen($word) <= 2) {
                     $val = intval($word);
-                    // Match integer with word boundary so '4' does not match '14', '24', or decimal '4.5'
                     $q->whereRaw("CONCAT_WS(' ', code, name) REGEXP '(^|[^0-9.])0*{$val}([^0-9.]|$)'");
                 } else {
                     $q->whereRaw("CONCAT_WS(' ', code, name, COALESCE(specification, '')) LIKE ?", ["%{$word}%"]);
