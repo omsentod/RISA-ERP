@@ -63,13 +63,13 @@ class ProductImportParserTest extends TestCase
         ]);
     }
 
-    public function test_only_exact_match_is_duplicate_others_are_new(): void
+    public function test_same_code_different_attributes_is_update_others_are_new_or_duplicate(): void
     {
         $this->seedExistingProduct();
 
         $path = $this->makeXlsx([
             ['Bone plate', 'OF 1010 04', 'Semi Tubular Plate', '21302420095', 1, '01', 'Tidak'],        // sama persis → DUPLICATE
-            ['Bone plate', 'OF 1010 04', 'Semi Tubular Plate REV2', '21302420095', 1, '01', 'Tidak'],   // kode sama, nama beda → NEW
+            ['Bone plate', 'OF 1010 04', 'Semi Tubular Plate REV2', '21302420095', 1, '01', 'Tidak'],   // kode & is_custom sama, nama beda → UPDATE
             ['New spec', 'OF 9999 99', 'Produk Baru', '21302420095', 1, '02', 'Tidak'],                 // kode baru → NEW
         ]);
 
@@ -78,7 +78,8 @@ class ProductImportParserTest extends TestCase
             ->map->count();
 
         $this->assertSame(1, $counts[ProductImportRow::STATUS_DUPLICATE] ?? 0);
-        $this->assertSame(2, $counts[ProductImportRow::STATUS_NEW] ?? 0);
+        $this->assertSame(1, $counts[ProductImportRow::STATUS_UPDATE] ?? 0);
+        $this->assertSame(1, $counts[ProductImportRow::STATUS_NEW] ?? 0);
     }
 
     public function test_nie_akd_prefix_difference_still_counts_as_exact_match(): void
@@ -139,4 +140,100 @@ class ProductImportParserTest extends TestCase
             'is_custom' => true,
         ]);
     }
+
+    public function test_apply_product_import_update_existing_updates_without_creating_new_record(): void
+    {
+        $this->seedExistingProduct();
+        $initialCount = \App\Domain\Product\Models\Product::count();
+        $existing = \App\Domain\Product\Models\Product::first();
+
+        $path = $this->makeXlsx([
+            ['Bone plate', 'OF 1010 04', 'Semi Tubular Plate UPDATED', '21302420095', 1, '01', 'Tidak'],
+        ]);
+
+        $rows = app(ProductImportParser::class)->parse($path);
+        $result = app(\App\Domain\Import\Actions\ApplyProductImport::class)->handle($rows, 'update_existing');
+
+        $this->assertSame(1, $result['updated']);
+        $this->assertSame(0, $result['inserted']);
+        $this->assertSame($initialCount, \App\Domain\Product\Models\Product::count());
+        $this->assertSame('Semi Tubular Plate UPDATED', $existing->fresh()->name);
+    }
+
+    public function test_apply_product_import_update_existing_restores_soft_deleted_product(): void
+    {
+        $this->seedExistingProduct();
+        $existing = \App\Domain\Product\Models\Product::first();
+        $existing->delete();
+        $this->assertTrue($existing->fresh()->trashed());
+
+        $path = $this->makeXlsx([
+            ['Bone plate', 'OF 1010 04', 'Semi Tubular Plate RESTORED', '21302420095', 1, '01', 'Tidak'],
+        ]);
+
+        $rows = app(ProductImportParser::class)->parse($path);
+        $result = app(\App\Domain\Import\Actions\ApplyProductImport::class)->handle($rows, 'update_existing');
+
+        $this->assertSame(1, $result['updated']);
+        $this->assertSame(0, $result['inserted']);
+        $this->assertFalse($existing->fresh()->trashed());
+        $this->assertSame('Semi Tubular Plate RESTORED', $existing->fresh()->name);
+    }
+
+    public function test_reimport_preserves_surat_jalan_items_association(): void
+    {
+        $this->seedExistingProduct();
+        $product = \App\Domain\Product\Models\Product::first();
+
+        // Buat OutboundTransaction dan Item
+        $user = \App\Models\User::factory()->create();
+        $tx = \App\Domain\Stock\Models\OutboundTransaction::create([
+            'doc_no' => 'SJ-2026-TEST',
+            'doc_date' => now(),
+            'destination' => 'RSUD Test',
+            'created_by' => $user->id,
+            'status' => \App\Domain\Stock\Models\OutboundTransaction::STATUS_COMPLETED,
+        ]);
+
+        $item = $tx->items()->create([
+            'product_id' => $product->id,
+            'quantity' => 5,
+            'lot_number' => '122609001',
+            'scanned_at' => now(),
+        ]);
+
+        // Re-import file dengan nama baru untuk produk tersebut
+        $path = $this->makeXlsx([
+            ['Bone plate', 'OF 1010 04', 'Semi Tubular Plate REIMPORT', '21302420095', 1, '01', 'Tidak'],
+        ]);
+
+        $rows = app(ProductImportParser::class)->parse($path);
+        app(\App\Domain\Import\Actions\ApplyProductImport::class)->handle($rows, 'update_existing');
+
+        // Pastikan relasi item surat jalan tidak rusak dan product_id tetap sama
+        $freshItem = $item->fresh(['product']);
+        $this->assertNotNull($freshItem->product);
+        $this->assertSame($product->id, $freshItem->product_id);
+        $this->assertSame('122609001', $freshItem->lot_number);
+        $this->assertSame(5, $freshItem->quantity);
+    }
+
+    public function test_apply_product_import_skip_does_not_insert_duplicate_for_status_update(): void
+    {
+        $this->seedExistingProduct();
+        $initialCount = \App\Domain\Product\Models\Product::count();
+
+        $path = $this->makeXlsx([
+            ['Bone plate', 'OF 1010 04', 'Semi Tubular Plate BEDA', '21302420095', 1, '01', 'Tidak'],
+        ]);
+
+        $rows = app(ProductImportParser::class)->parse($path);
+        $result = app(\App\Domain\Import\Actions\ApplyProductImport::class)->handle($rows, 'skip');
+
+        $this->assertSame(0, $result['inserted']);
+        $this->assertSame(1, $result['skipped']);
+        $this->assertSame($initialCount, \App\Domain\Product\Models\Product::count());
+    }
 }
+
+

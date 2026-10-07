@@ -208,6 +208,12 @@ class ScanOutbound extends Page
             ->delete();
         $this->transaction->recalculateTotalQty();
         $this->refreshTransaction();
+
+        Notification::make()
+            ->title('Item dihapus')
+            ->warning()
+            ->duration(1500)
+            ->send();
     }
 
     public function updateHeaderInfo(): void

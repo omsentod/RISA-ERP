@@ -189,7 +189,10 @@ class EditOutboundItems extends Page
     protected function getViewData(): array
     {
         return [
-            'items' => $this->transaction->items()->with('product')->orderByDesc('scanned_at')->get(),
+            'items' => $this->transaction->items()->with('product')->get()->sortBy(
+                fn ($item) => $item->product?->code ?? '',
+                SORT_NATURAL | SORT_FLAG_CASE
+            )->values(),
             'products' => Product::orderBy('code')->get(['id', 'code', 'name']),
         ];
     }

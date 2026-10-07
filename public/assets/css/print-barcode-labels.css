@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 @page {
     size: 90mm 50mm;
     margin: 0;
@@ -13,8 +15,8 @@ html,
 body {
     width: 100%;
     height: auto;
-    font-family: Arial, Helvetica, sans-serif;
-    color: #000;
+    font-family: 'Inter', Arial, Helvetica, sans-serif;
+    color: #111827; /* Hitam pekat premium */
     background: #e5e7eb; /* Warna latar belakang abu-abu untuk layar */
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -134,6 +136,7 @@ body {
     line-height: 1.15;
     letter-spacing: -0.1px;
     padding: 0.5mm;
+    color: #4b5563; /* Abu-abu gelap agar tidak menyaingi info utama */
 }
 
 /* --- GROUP 3: NIE, REF, QTY --- */
@@ -162,6 +165,15 @@ body {
 .group-3 .lbl {
     display: inline-block;
     height: 8mm;
+    color: #6b7280; /* Warna abu-abu pudar untuk label agar value lebih menonjol */
+    font-weight: normal;
+    font-size: 8.5pt;
+}
+
+.group-3 .val {
+    font-weight: normal;
+    font-size: 8.5pt;
+    color: #111827;
 }
 
 /* --- GROUP 4: Barcode SVG & Code --- */
@@ -178,28 +190,25 @@ body {
 
 .barcode-wrapper {
     width: 12mm;
-    height: 38mm;
+    height: 46mm; /* Merenggang hampir penuh sepanjang kertas (50mm), menyisakan ruang kosong 2mm di setiap sisi agar tidak menabrak bingkai */
     position: relative;
     flex-shrink: 0;
 }
 
 .barcode-svg-container {
     position: absolute;
-    width: 38mm;
-    height: 12mm;
+    width: 46mm; /* Mengikuti panjang wrapper */
+    height: 12mm; /* Tinggi tiang hitam barcode */
     transform: rotate(90deg);
     transform-origin: top left;
     left: 12mm;
     top: 0;
-    box-sizing: border-box;
-    padding: 0 1.5mm;
 }
 
 .barcode-svg-container svg {
-    width: 100%;
+    width: 100%; /* Ubah dari auto ke 100% agar benar-benar merenggang memenuhi 46mm */
     height: 100%;
     display: block;
-    shape-rendering: crispEdges;
 }
 
 /* --- GROUP 4B: Material Info (Mat 316L & Current Year Month) --- */
@@ -222,6 +231,7 @@ body {
     letter-spacing: 0.5px;
     text-align: center;
     white-space: nowrap;
+    color: #111827;
 }
 
 .mat-text {
@@ -230,6 +240,7 @@ body {
     line-height: 1.2;
     text-align: left;
     white-space: nowrap;
+    color: #374151; /* Abu-abu sedang */
 }
 
 /* --- GROUP 5: Extracted BTW Medical Symbols & ISO Badges Image + Produksi (Leftmost) --- */

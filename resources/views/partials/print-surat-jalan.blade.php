@@ -1,7 +1,10 @@
 @php
     use Illuminate\Support\Carbon;
 
-    $items = $transaction->items;
+    $items = $transaction->items->sortBy(
+        fn ($item) => $item->product?->code ?? '',
+        SORT_NATURAL | SORT_FLAG_CASE
+    )->values();
     $totalQty = (int) $items->sum('quantity');
     $docDate = $transaction->doc_date ?? now();
 
@@ -93,12 +96,14 @@
                             }
 
                             $cleanItemCode = rtrim($product?->code ?? '', '.');
-                            $itemCodeDisplay = $cleanItemCode . (($product?->is_custom ?? false) ? '.' : '');
+                            $itemCodeDisplay = $cleanItemCode !== '' 
+                                ? ($cleanItemCode . (($product?->is_custom ?? false) ? '.' : ''))
+                                : ('[ID: ' . $item->product_id . ']');
                         @endphp
                         <tr>
                             <td class="col-no">{{ $rowNumber }}</td>
                             <td class="col-item">{{ $itemCodeDisplay }}</td>
-                            <td class="col-keterangan">{{ $product?->name }}</td>
+                            <td class="col-keterangan">{{ $product?->name ?? 'Produk tidak ditemukan di master data' }}</td>
                             <td class="col-nie">{{ $formattedNie }}</td>
                             <td class="col-batch">{{ $batchNumber }}</td>
                             <td class="col-jumlah">{{ $item->quantity }} Pcs</td>

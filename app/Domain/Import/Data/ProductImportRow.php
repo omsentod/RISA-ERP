@@ -7,6 +7,8 @@ class ProductImportRow
     public const STATUS_NEW = 'new';
 
     public const STATUS_DUPLICATE = 'duplicate';
+    
+    public const STATUS_UPDATE = 'update';
 
     public const STATUS_INVALID = 'invalid';
 

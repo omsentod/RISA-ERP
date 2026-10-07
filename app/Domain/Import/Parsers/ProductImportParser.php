@@ -68,16 +68,21 @@ class ProductImportParser
                 }
 
                 $resolvedQty = $qty > 0 ? $qty : 1;
-                $exactMatch = $this->findExactMatch(
+                $targetMatch = $this->findTargetMatch(
                     $existingCodes[$code] ?? [],
-                    $categoryName,
                     $name,
                     $spec,
-                    $nie,
-                    $resolvedQty,
-                    $gol,
-                    $isCustom,
+                    $isCustom
                 );
+
+                $status = ProductImportRow::STATUS_NEW;
+                if ($targetMatch !== null) {
+                    if ($this->isIdentical($targetMatch, $categoryName, $name, $spec, $nie, $resolvedQty, $gol, $isCustom)) {
+                        $status = ProductImportRow::STATUS_DUPLICATE;
+                    } else {
+                        $status = ProductImportRow::STATUS_UPDATE;
+                    }
+                }
 
                 $rows[] = new ProductImportRow(
                     sheetIndex: $sheetIndex,
@@ -90,10 +95,8 @@ class ProductImportParser
                     defaultQuantity: $resolvedQty,
                     productGroupCode: $gol,
                     isCustom: $isCustom,
-                    // Duplikat HANYA jika seluruh kolom sama persis dengan produk existing.
-                    // Kode sama tapi ada kolom yang beda → NEW (dibuat sebagai produk baru).
-                    status: $exactMatch !== null ? ProductImportRow::STATUS_DUPLICATE : ProductImportRow::STATUS_NEW,
-                    existingData: $exactMatch,
+                    status: $status,
+                    existingData: $targetMatch,
                 );
             }
         }
@@ -106,11 +109,12 @@ class ProductImportParser
      */
     private function loadExistingCodes(): array
     {
-        return Product::query()
+        return Product::withTrashed()
             ->with(['category:id,name', 'registration:id,nie_number'])
-            ->get(['id', 'code', 'name', 'specification', 'default_quantity', 'is_custom', 'product_group_code', 'product_category_id', 'registration_id'])
+            ->get(['id', 'code', 'name', 'specification', 'default_quantity', 'is_custom', 'product_group_code', 'product_category_id', 'registration_id', 'deleted_at'])
             ->groupBy('code')
             ->map(fn ($group) => $group->map(fn (Product $p) => [
+                'id' => $p->id,
                 'code' => $p->code,
                 'name' => $p->name,
                 'specification' => $p->specification,
@@ -119,41 +123,65 @@ class ProductImportParser
                 'default_quantity' => $p->default_quantity,
                 'is_custom' => (bool) $p->is_custom,
                 'product_group_code' => $p->product_group_code,
+                'deleted_at' => $p->deleted_at,
             ])->all())
             ->toArray();
     }
 
     /**
-     * Baris dianggap duplikat hanya jika SELURUH kolom sama persis dengan salah satu produk existing berkode sama.
+     * Mencari target produk yang akan di-update (berdasarkan is_custom, name/spec jika ada lebih dari 1 varian custom).
      *
      * @param array<int, array<string, mixed>> $candidates
      * @return array<string, mixed>|null
      */
-    private function findExactMatch(
+    private function findTargetMatch(
         array $candidates,
+        ?string $name,
+        ?string $spec,
+        bool $isCustom
+    ): ?array {
+        $matches = array_filter($candidates, fn ($c) => (bool) ($c['is_custom'] ?? false) === $isCustom);
+        
+        if (empty($matches)) {
+            return null;
+        }
+
+        if (count($matches) === 1) {
+            return reset($matches);
+        }
+
+        // Jika ada lebih dari 1 kandidat (misal beberapa variasi custom pada kode yang sama),
+        // coba temukan yang cocok secara spesifikasi dan nama.
+        foreach ($matches as $match) {
+            if (($match['specification'] ?? null) === $spec && ($match['name'] ?? null) === $name) {
+                return $match;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Cek apakah seluruh atribut 100% sama persis dan produk tidak sedang terhapus.
+     */
+    private function isIdentical(
+        array $existing,
         string $categoryName,
         ?string $name,
         ?string $spec,
         ?string $nie,
         int $qty,
         ?string $gol,
-        bool $isCustom = false,
-    ): ?array {
-        foreach ($candidates as $existing) {
-            if (
-                $name === ($existing['name'] ?? null)
-                && $spec === ($existing['specification'] ?? null)
-                && $gol === ($existing['product_group_code'] ?? null)
-                && $qty === (int) ($existing['default_quantity'] ?? 1)
-                && (bool) ($existing['is_custom'] ?? false) === $isCustom
-                && $categoryName === (string) ($existing['category_name'] ?? '')
-                && $this->normalizeNie($nie) === $this->normalizeNie($existing['nie_number'] ?? null)
-            ) {
-                return $existing;
-            }
-        }
-
-        return null;
+        bool $isCustom
+    ): bool {
+        return empty($existing['deleted_at'])
+            && $name === ($existing['name'] ?? null)
+            && $spec === ($existing['specification'] ?? null)
+            && $gol === ($existing['product_group_code'] ?? null)
+            && $qty === (int) ($existing['default_quantity'] ?? 1)
+            && (bool) ($existing['is_custom'] ?? false) === $isCustom
+            && $categoryName === (string) ($existing['category_name'] ?? '')
+            && $this->normalizeNie($nie) === $this->normalizeNie($existing['nie_number'] ?? null);
     }
 
     private function normalizeNie(?string $nie): string

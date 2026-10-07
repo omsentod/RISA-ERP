@@ -54,12 +54,13 @@ class ListProducts extends ListRecords
                                 'result' => $this->previewImportRows($get('file')),
                             ])),
                         Forms\Components\Radio::make('duplicate_strategy')
-                            ->label('Penanganan Data Duplikat')
+                            ->label('Penanganan Data Duplikat / Update')
                             ->options([
-                                'skip' => 'Skip yang sama persis (baris identik dengan produk existing tidak ditambah)',
-                                'create_new' => 'Buat produk baru (tetap tambahkan semua baris valid)',
+                                'update_existing' => 'Update/Perbarui atribut produk yang sudah ada (Sangat Direkomendasikan)',
+                                'skip' => 'Skip (Abaikan baris yang memiliki kode sama)',
+                                'create_new' => 'Buat produk baru (Tetap duplikat data)',
                             ])
-                            ->default('skip')
+                            ->default('update_existing')
                             ->required(),
                     ])
                     ->modalSubmitActionLabel('Mulai Import')
@@ -88,8 +89,9 @@ class ListProducts extends ListRecords
                             Notification::make()
                                 ->title('Import Excel Selesai')
                                 ->body(sprintf(
-                                    '%d ditambah, %d di-skip, %d invalid',
+                                    '%d ditambah, %d di-update, %d di-skip, %d invalid',
                                     $summary['inserted'],
+                                    $summary['updated'] ?? 0,
                                     $summary['skipped'],
                                     $summary['invalid']
                                 ))
