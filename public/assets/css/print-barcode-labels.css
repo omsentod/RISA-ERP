@@ -91,6 +91,7 @@ body {
 }
 
 .product-title {
+    font-family: 'Calibri', sans-serif !important; /* Diberi !important agar kebal dari timpaan sistem */
     font-size: 12pt;
     font-weight: bold;
     line-height: 1.15;
@@ -190,14 +191,14 @@ body {
 
 .barcode-wrapper {
     width: 12mm;
-    height: 46mm; /* Merenggang hampir penuh sepanjang kertas (50mm), menyisakan ruang kosong 2mm di setiap sisi agar tidak menabrak bingkai */
+    height: 35.6mm; /* HARUS persis 35.6mm (Dot-Perfect: 3 titik tinta per modul). Mencegah garis menyatu yang menyebabkan scanner salah baca/halusinasi angka */
     position: relative;
     flex-shrink: 0;
 }
 
 .barcode-svg-container {
     position: absolute;
-    width: 46mm; /* Mengikuti panjang wrapper */
+    width: 35.6mm; /* HARUS persis 35.6mm */
     height: 12mm; /* Tinggi tiang hitam barcode */
     transform: rotate(90deg);
     transform-origin: top left;
