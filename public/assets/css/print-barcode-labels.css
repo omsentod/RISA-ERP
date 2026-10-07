@@ -94,7 +94,7 @@ body {
     font-family: 'Calibri', sans-serif !important; /* Diberi !important agar kebal dari timpaan sistem */
     font-size: 12pt;
     font-weight: bold;
-    line-height: 1.15;
+    line-height: 1.15 !important;
     text-align: left;
     width: 16mm;
     max-height: 30mm;
@@ -105,17 +105,17 @@ body {
 
 .product-title.product-title-sm {
     font-size: 9.2pt;
-    line-height: 1.12;
+    line-height: 0.95 !important;
 }
 
 .product-title.product-title-xs {
     font-size: 8.2pt;
-    line-height: 1.08;
+    line-height: 0.90 !important;
 }
 
 .product-title.product-title-xxs {
     font-size: 7.2pt;
-    line-height: 1.05;
+    line-height: 0.95 !important;
 }
 
 /* --- GROUP 2: Caution --- */
@@ -273,10 +273,11 @@ body {
     object-fit: contain;
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
+    margin-bottom: 2mm;
 }
 
 .produksi-block {
-    font-size: 6.5pt;
+    font-size: 6.0pt;
     font-weight: medium;
     line-height: 1.15;
     text-align: left;

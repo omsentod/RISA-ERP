@@ -124,7 +124,8 @@ class OutboundTransactionResource extends Resource
                     ->label('Tujuan')
                     ->searchable()
                     ->placeholder('—')
-                    ->limit(40),
+                    ->description(fn (OutboundTransaction $record): ?string => $record->notes)
+                    ->wrap(),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()

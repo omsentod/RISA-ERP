@@ -83,6 +83,19 @@ html, body {
     margin-bottom: 0.5mm;
 }
 
+.meta-info .distributor {
+    margin-bottom: 0.5mm;
+}
+
+.meta-info .doc-notes {
+    font-size: 9.5pt;
+    font-weight: normal;
+    color: #111;
+    margin-top: 0.5mm;
+    margin-bottom: 0.5mm;
+    word-break: break-word;
+}
+
 .meta-info .page-no {
     font-size: 10pt;
     font-weight: normal;

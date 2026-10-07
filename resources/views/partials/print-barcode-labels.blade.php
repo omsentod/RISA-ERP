@@ -98,7 +98,7 @@
                 $initialTitleStyle .= 'transform:' . $serverLayout['title']['transform'] . ';';
             }
             if (!empty($serverLayout['title']['fontSize'])) {
-                $initialTitleStyle .= 'font-size:' . $serverLayout['title']['fontSize'] . ';line-height:normal;';
+                $initialTitleStyle .= 'font-size:' . $serverLayout['title']['fontSize'] . ';line-height:0.90;';
             }
             if (!empty($serverLayout['title']['height'])) {
                 $initialTitleStyle .= 'height:' . $serverLayout['title']['height'] . ';max-height:none;flex-shrink:0;';
@@ -285,7 +285,7 @@
                 if (layout.title.transform) titleEl.style.transform = layout.title.transform;
                 if (layout.title.fontSize) {
                     titleEl.style.fontSize = layout.title.fontSize;
-                    titleEl.style.lineHeight = 'normal';
+                    titleEl.style.lineHeight = '0.90';
                     titleEl.classList.remove('product-title-sm', 'product-title-xs', 'product-title-xxs');
                     const ind = titleEl.querySelector('.font-size-indicator');
                     if (ind) ind.innerText = layout.title.fontSize;
@@ -708,7 +708,7 @@
                         const fontSizeStr = val + 'px';
                         const updateEl = (el) => {
                             el.style.fontSize = fontSizeStr;
-                            el.style.lineHeight = 'normal';
+                            el.style.lineHeight = '0.90';
                             el.classList.remove('product-title-sm', 'product-title-xs', 'product-title-xxs');
                             const bind = el.querySelector('.font-size-indicator');
                             if (bind) bind.innerText = fontSizeStr;
@@ -753,7 +753,7 @@
 
             const updateEl = (el) => {
                 el.style.fontSize = sizeStr;
-                el.style.lineHeight = 'normal';
+                el.style.lineHeight = '0.90';
                 el.classList.remove('product-title-sm', 'product-title-xs', 'product-title-xxs');
                 const ind = el.querySelector('.font-size-indicator');
                 if (ind) ind.innerText = sizeStr;

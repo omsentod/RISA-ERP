@@ -104,4 +104,31 @@ class PrintSuratJalanPaginationTest extends TestCase
         // Grand Total appears on the last page
         $this->assertStringContainsString('100 Pcs', $html);
     }
+
+    public function test_surat_jalan_displays_notes_below_destination(): void
+    {
+        $tx = OutboundTransaction::create([
+            'doc_no' => 'SJ-20260918-003',
+            'doc_date' => '2026-09-18',
+            'destination' => 'RSUD Dr. Soetomo',
+            'notes' => 'Kirim via kurir ekspres sebelum jam 14:00',
+            'status' => OutboundTransaction::STATUS_COMPLETED,
+            'total_qty' => 1,
+        ]);
+
+        $product = Product::factory()->create(['code' => 'PROD-NOTES-1']);
+        OutboundTransactionItem::create([
+            'outbound_transaction_id' => $tx->id,
+            'product_id' => $product->id,
+            'quantity' => 1,
+            'lot_number' => 'LOT999',
+            'scanned_at' => now(),
+        ]);
+
+        $tx->load(['items.product.registration', 'creator']);
+        $html = view('partials.print-surat-jalan', ['transaction' => $tx])->render();
+
+        $this->assertStringContainsString('Dist: RSUD Dr. Soetomo', $html);
+        $this->assertStringContainsString('Catatan: Kirim via kurir ekspres sebelum jam 14:00', $html);
+    }
 }

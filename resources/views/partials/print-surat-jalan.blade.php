@@ -55,6 +55,9 @@
                 <div class="meta-info">
                     <div class="doc-no">No : {{ $transaction->doc_no }}</div>
                     <div class="distributor">Dist: {{ $transaction->destination ?: '-' }}</div>
+                    @if (!empty($transaction->notes))
+                        <div class="doc-notes">{{ $transaction->notes }}</div>
+                    @endif
                     @if ($totalPages > 1)
                         <div class="page-no">Hal : {{ $pageNumber }} / {{ $totalPages }}</div>
                     @endif
