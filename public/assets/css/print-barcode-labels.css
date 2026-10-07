@@ -191,6 +191,8 @@ body {
     transform-origin: top left;
     left: 12mm;
     top: 0;
+    box-sizing: border-box;
+    padding: 0 1.5mm;
 }
 
 .barcode-svg-container svg {
