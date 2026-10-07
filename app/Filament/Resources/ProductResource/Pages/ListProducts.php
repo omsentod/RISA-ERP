@@ -13,6 +13,7 @@ use Filament\Actions;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
@@ -21,6 +22,19 @@ class ListProducts extends ListRecords
     use HasSelectionToggle;
 
     protected static string $resource = ProductResource::class;
+
+    protected function applySearchToTableQuery(Builder $query): Builder
+    {
+        $this->applyColumnSearchesToTableQuery($query);
+
+        $search = $this->getTableSearch();
+
+        if (blank($search)) {
+            return $query;
+        }
+
+        return ProductResource::applyProductSearch($query, $search);
+    }
 
     /** @var array<string, mixed> Memo hasil parse preview per-request */
     private array $importPreviewCache = [];

@@ -204,9 +204,6 @@ body {
     transform-origin: top left;
     left: 12mm;
     top: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
 .barcode-svg-container svg {

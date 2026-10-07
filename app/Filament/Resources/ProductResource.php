@@ -128,27 +128,27 @@ class ProductResource extends Resource
                     ->limit(60),
                 Tables\Columns\TextColumn::make('product_group_code')
                     ->label('Kode Golongan')
-                    ->searchable()
+                    ->searchable(isGlobal: false)
                     ->sortable()
                     ->badge()
                     ->color('warning')
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('specification')
                     ->label('Spesifikasi')
-                    ->searchable()
+                    ->searchable(isGlobal: false)
                     ->wrap()
                     ->limit(80)
                     ->tooltip(fn ($record) => $record?->specification)
                     ->hidden(),
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('Kategori')
-                    ->searchable()
+                    ->searchable(isGlobal: false)
                     ->sortable()
                     ->badge()
                     ->color('info'),
                 Tables\Columns\TextColumn::make('registration.nie_number')
                     ->label('NIE')
-                    ->searchable()
+                    ->searchable(isGlobal: false)
                     ->badge()
                     ->color('success'),
                 Tables\Columns\TextColumn::make('default_quantity')
@@ -443,6 +443,87 @@ class ProductResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return (string) Product::count();
+    }
+
+    public static function applyProductSearch(Builder $query, string $search): Builder
+    {
+        $trimmed = trim($search);
+        if (blank($trimmed)) {
+            return $query;
+        }
+
+        if ($query->getConnection()->getDriverName() === 'sqlite') {
+            $pdo = $query->getConnection()->getPdo();
+            if (is_object($pdo) && (method_exists($pdo, 'sqliteCreateFunction') || method_exists($pdo, 'createFunction'))) {
+                $method = method_exists($pdo, 'createFunction') ? 'createFunction' : 'sqliteCreateFunction';
+                @$pdo->{$method}('regexp', fn ($pattern, $value) => preg_match('/' . $pattern . '/i', (string) $value) ? 1 : 0);
+            }
+        }
+
+        $normalized = preg_replace('/\s+/', ' ', $trimmed);
+        $stripped = preg_replace('/\s+/', '', $trimmed);
+
+        // 1. Direct phrase or SKU match
+        $phraseQuery = (clone $query)->where(function (Builder $q) use ($normalized, $stripped) {
+            $q->where('code', 'like', "%{$normalized}%")
+                ->orWhere('name', 'like', "%{$normalized}%")
+                ->orWhere('specification', 'like', "%{$normalized}%")
+                ->orWhereHas('category', fn (Builder $cq) => $cq->where('name', 'like', "%{$normalized}%"))
+                ->orWhereHas('registration', fn (Builder $rq) => $rq->where('nie_number', 'like', "%{$normalized}%"));
+
+            if (strlen($stripped) >= 3) {
+                $q->orWhereRaw("REPLACE(code, ' ', '') LIKE ?", ['%' . $stripped . '%']);
+            }
+
+            if (strlen($normalized) === 2 && ctype_digit($normalized)) {
+                $q->orWhere('product_group_code', $normalized);
+            }
+        });
+
+        if ($phraseQuery->exists()) {
+            return $query->where(function (Builder $q) use ($normalized, $stripped) {
+                $q->where('code', 'like', "%{$normalized}%")
+                    ->orWhere('name', 'like', "%{$normalized}%")
+                    ->orWhere('specification', 'like', "%{$normalized}%")
+                    ->orWhereHas('category', fn (Builder $cq) => $cq->where('name', 'like', "%{$normalized}%"))
+                    ->orWhereHas('registration', fn (Builder $rq) => $rq->where('nie_number', 'like', "%{$normalized}%"));
+
+                if (strlen($stripped) >= 3) {
+                    $q->orWhereRaw("REPLACE(code, ' ', '') LIKE ?", ['%' . $stripped . '%']);
+                }
+
+                if (strlen($normalized) === 2 && ctype_digit($normalized)) {
+                    $q->orWhere('product_group_code', $normalized);
+                }
+            });
+        }
+
+        // 2. Multi-word search (non-contiguous words, e.g. 'Onethird Hole 4')
+        $words = array_filter(
+            explode(' ', $normalized),
+            fn ($w) => filled($w) && $w !== '-'
+        );
+
+        if (empty($words)) {
+            return $query;
+        }
+
+        return $query->where(function (Builder $q) use ($words) {
+            foreach ($words as $word) {
+                if (ctype_digit($word) && strlen($word) <= 2) {
+                    $val = intval($word);
+                    // Match integer with word boundary so '4' does not match '14', '24', or decimal '4.5'
+                    $q->whereRaw("CONCAT_WS(' ', code, name) REGEXP '(^|[^0-9.])0*{$val}([^0-9.]|$)'");
+                } else {
+                    $q->whereRaw("CONCAT_WS(' ', code, name, COALESCE(specification, '')) LIKE ?", ["%{$word}%"]);
+                }
+            }
+        });
+    }
+
+    protected static function applyGlobalSearchAttributeConstraints(Builder $query, string $search): void
+    {
+        static::applyProductSearch($query, $search);
     }
 
     public static function getPages(): array
