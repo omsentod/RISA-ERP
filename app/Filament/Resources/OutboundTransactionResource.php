@@ -86,8 +86,9 @@ class OutboundTransactionResource extends Resource
                     ->schema([
                         Forms\Components\TextInput::make('doc_no')
                             ->label('No. Surat Jalan')
-                            ->disabled()
-                            ->dehydrated(false),
+                            ->required()
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(255),
                         Forms\Components\DatePicker::make('doc_date')
                             ->label('Tanggal')
                             ->native(false)
