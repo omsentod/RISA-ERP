@@ -165,11 +165,11 @@ class BuildPrintBarcodeJs
      */
     private function encodeCompactBarcode(int $productId, int $qty, ?string $lot = null): string
     {
-        // Jika ada LOT, kita kompres menjadi 12 digit (Payload EAN-13)
-        // Format: [ID:4][QTY:2][YM:3][SEQ:3]
+        // Jika ada LOT, kita kompres menjadi 14 digit (Prefix '99' + Payload 12 digit)
+        // Kita menggunakan Code 128C (yang butuh panjang genap) untuk menghindari gagal scan EAN-13 pada printer 203 DPI.
         if ($lot !== null) {
             $cleanLot = preg_replace('/\D/', '', $lot);
-            if (strlen($cleanLot) === 9) { // Format: {groupCode(2)}{YY(2)}{MM(2)}{seq(3)}
+            if (strlen($cleanLot) >= 9) { // Format: {groupCode(2)}{YY(2)}{MM(2)}{seq(3)}
                 $year = 2000 + (int) substr($cleanLot, 2, 2);
                 $month = (int) substr($cleanLot, 4, 2);
                 $seq = substr($cleanLot, 6, 3);
@@ -182,7 +182,7 @@ class BuildPrintBarcodeJs
                 $qtyStr = str_pad((string) min($qty, 99), 2, '0', STR_PAD_LEFT);
                 $ymStr = str_pad((string) min($ym, 999), 3, '0', STR_PAD_LEFT);
                 
-                return $idStr . $qtyStr . $ymStr . $seq; // Tepat 12 digit
+                return '99' . $idStr . $qtyStr . $ymStr . $seq; // 14 digit genap
             }
         }
 
@@ -198,12 +198,9 @@ class BuildPrintBarcodeJs
 
     private function renderBarcodeSvg(string $data): string
     {
-        // 1. Generate SVG base dengan widthFactor = 1 (1 module = 1 unit viewBox)
-        if (strlen($data) === 12) {
-            $svg = $this->barcode->svgEan13($data, 1, self::BARCODE_HEIGHT);
-        } else {
-            $svg = $this->barcode->svgCode128C($data, 1, self::BARCODE_HEIGHT);
-        }
+        // Generate SVG base dengan widthFactor = 1
+        // Selalu gunakan Code 128C karena EAN-13 rentan distorsi / salah baca pada printer thermal 203 DPI
+        $svg = $this->barcode->svgCode128C($data, 1, self::BARCODE_HEIGHT);
 
         // 2. Hitungan Presisi Matematis (Dot-Perfect Mapping) untuk ketebalan yang rata
         // EAN-13 memiliki tepat 95 modul.

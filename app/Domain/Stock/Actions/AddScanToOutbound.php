@@ -68,11 +68,10 @@ class AddScanToOutbound
 
         $len = strlen($cleanCode);
 
-        // --- NEW EAN-13 CUSTOM DECODER ---
-        // Jika 13 digit, maka ini adalah format kompresi EAN-13 kita:
-        // Format Payload (12 digit): [ID:4][QTY:2][YM:3][SEQ:3] + Checksum(1)
-        if ($len === 13) {
-            $payload = substr($cleanCode, 0, 12);
+        // --- NEW CODE 128C DECODER (14 Digit Terkompresi) ---
+        // Payload: '99' + ID (4) + QTY (2) + YM (3) + SEQ (3) = 14 digit.
+        if ($len === 14 && str_starts_with($cleanCode, '99')) {
+            $payload = substr($cleanCode, 2, 12);
             $productId = (int) substr($payload, 0, 4);
             $qty = (int) substr($payload, 4, 2);
             $ym = (int) substr($payload, 6, 3);
