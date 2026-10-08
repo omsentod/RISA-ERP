@@ -165,14 +165,14 @@ class BuildPrintBarcodeJs
      */
     private function encodeCompactBarcode(int $productId, int $qty, ?string $lot = null): string
     {
-        // Jika ada LOT, kita kompres menjadi 14 digit (Prefix '99' + Payload 12 digit)
+        // Jika ada LOT, kita kompres dengan awalan '99'
         // Kita menggunakan Code 128C (yang butuh panjang genap) untuk menghindari gagal scan EAN-13 pada printer 203 DPI.
         if ($lot !== null) {
             $cleanLot = preg_replace('/\D/', '', $lot);
-            if (strlen($cleanLot) >= 9) { // Format: {groupCode(2)}{YY(2)}{MM(2)}{seq(3)}
+            if (strlen($cleanLot) >= 8) { // Format: {groupCode(2)}{YY(2)}{MM(2)}{seq(2+)}
                 $year = 2000 + (int) substr($cleanLot, 2, 2);
                 $month = (int) substr($cleanLot, 4, 2);
-                $seq = substr($cleanLot, 6, 3);
+                $seq = substr($cleanLot, 6);
                 
                 // Compress Year and Month into a 3-digit number (base 2024)
                 $ym = ($year - 2024) * 12 + $month;
@@ -182,7 +182,14 @@ class BuildPrintBarcodeJs
                 $qtyStr = str_pad((string) min($qty, 99), 2, '0', STR_PAD_LEFT);
                 $ymStr = str_pad((string) min($ym, 999), 3, '0', STR_PAD_LEFT);
                 
-                return '99' . $idStr . $qtyStr . $ymStr . $seq; // 14 digit genap
+                $full = '99' . $idStr . $qtyStr . $ymStr . $seq;
+                
+                // Pastikan total panjang selalu genap untuk Code 128C
+                if (strlen($full) % 2 !== 0) {
+                    $full = '0' . $full;
+                }
+                
+                return $full;
             }
         }
 

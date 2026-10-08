@@ -16,8 +16,10 @@ body {
     width: 100%;
     height: auto;
     font-family: 'Inter', Arial, Helvetica, sans-serif;
-    color: #111827; /* Hitam pekat premium */
-    background: #e5e7eb; /* Warna latar belakang abu-abu untuk layar */
+    color: #111827;
+    /* Hitam pekat premium */
+    background: #e5e7eb;
+    /* Warna latar belakang abu-abu untuk layar */
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
     display: flex;
@@ -40,7 +42,8 @@ body {
     overflow: visible;
     box-sizing: border-box;
     background: #fff;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15); /* Bayangan seperti kertas asli */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    /* Bayangan seperti kertas asli */
 }
 
 .sheet:last-child {
@@ -59,8 +62,10 @@ body {
     background: #fff;
     overflow: visible;
     box-sizing: border-box;
-    outline: 2px dashed #000001; /* Garis bantu abu-abu yang lebih tebal dan jelas */
-    outline-offset: -3px; /* Garis bantu agak ke dalam */
+    outline: 2px dashed #000001;
+    /* Garis bantu abu-abu yang lebih tebal dan jelas */
+    outline-offset: -3px;
+    /* Garis bantu agak ke dalam */
 }
 
 /* Utility for vertical text flowing top to bottom */
@@ -91,7 +96,8 @@ body {
 }
 
 .product-title {
-    font-family: 'Calibri', sans-serif !important; /* Diberi !important agar kebal dari timpaan sistem */
+    font-family: 'Calibri', sans-serif !important;
+    /* Diberi !important agar kebal dari timpaan sistem */
     font-size: 12pt;
     font-weight: bold;
     line-height: 1.15;
@@ -137,7 +143,8 @@ body {
     line-height: 1.15;
     letter-spacing: -0.1px;
     padding: 0.5mm;
-    color: #4b5563; /* Abu-abu gelap agar tidak menyaingi info utama */
+    color: #4b5563;
+    /* Abu-abu gelap agar tidak menyaingi info utama */
 }
 
 /* --- GROUP 3: NIE, REF, QTY --- */
@@ -166,7 +173,8 @@ body {
 .group-3 .lbl {
     display: inline-block;
     height: 8mm;
-    color: #6b7280; /* Warna abu-abu pudar untuk label agar value lebih menonjol */
+    color: #6b7280;
+    /* Warna abu-abu pudar untuk label agar value lebih menonjol */
     font-weight: normal;
     font-size: 8.5pt;
 }
@@ -191,15 +199,18 @@ body {
 
 .barcode-wrapper {
     width: 12mm;
-    height: 42mm; /* HARUS persis 42mm (Dot-Perfect untuk Code 128C 14-digit pada 203 DPI = 3 titik tinta per modul) */
+    height: 42mm;
+    /* HARUS persis 42mm (Dot-Perfect untuk Code 128C 14-digit pada 203 DPI = 3 titik tinta per modul) */
     position: relative;
     flex-shrink: 0;
 }
 
 .barcode-svg-container {
     position: absolute;
-    width: 42mm; /* Mengikuti panjang wrapper */
-    height: 12mm; /* Tinggi tiang hitam barcode */
+    width: 42mm;
+    /* Mengikuti panjang wrapper */
+    height: 12mm;
+    /* Tinggi tiang hitam barcode */
     transform: rotate(90deg);
     transform-origin: top left;
     left: 12mm;
@@ -207,7 +218,8 @@ body {
 }
 
 .barcode-svg-container svg {
-    width: 100%; /* Ubah dari auto ke 100% agar benar-benar merenggang memenuhi 46mm */
+    width: 100%;
+    /* Ubah dari auto ke 100% agar benar-benar merenggang memenuhi 46mm */
     height: 100%;
     display: block;
 }
@@ -241,7 +253,8 @@ body {
     line-height: 1.2;
     text-align: left;
     white-space: nowrap;
-    color: #374151; /* Abu-abu sedang */
+    color: #374151;
+    /* Abu-abu sedang */
 }
 
 /* --- GROUP 5: Extracted BTW Medical Symbols & ISO Badges Image + Produksi (Leftmost) --- */
@@ -295,10 +308,13 @@ body {
     cursor: move;
     position: relative;
     user-select: none;
-    outline: 1px dashed #ccc; /* Gunakan outline agar tidak memakan ruang box model (layout persis sama dengan print) */
+    outline: 1px dashed #ccc;
+    /* Gunakan outline agar tidak memakan ruang box model (layout persis sama dengan print) */
     outline-offset: -1px;
-    background: rgba(240, 248, 255, 0.3); /* Sedikit warna untuk penanda */
+    background: rgba(240, 248, 255, 0.3);
+    /* Sedikit warna untuk penanda */
 }
+
 .draggable-title.dragging {
     opacity: 0.8;
 }
@@ -318,8 +334,10 @@ body {
     opacity: 0;
     transition: opacity 0.2s;
     z-index: 10;
-    writing-mode: horizontal-tb; /* Force horizontal for buttons */
+    writing-mode: horizontal-tb;
+    /* Force horizontal for buttons */
 }
+
 .draggable-title:hover .title-controls {
     opacity: 1;
 }
@@ -340,6 +358,7 @@ body {
     line-height: 1;
     font-family: monospace;
 }
+
 .btn-resize:hover {
     background: #ddd;
 }
@@ -351,7 +370,9 @@ body {
     cursor: text;
     border-radius: 2px;
 }
-.editable-field:hover, .editable-field:focus {
+
+.editable-field:hover,
+.editable-field:focus {
     outline: 1px dashed #666;
     outline-offset: -1px;
     background-color: #f0f0f0;
@@ -366,10 +387,12 @@ body {
     border-radius: 3px;
     transition: border-color 0.2s, background-color 0.2s;
 }
+
 .draggable-barcode:hover {
     border-color: #93c5fd;
     background-color: rgba(239, 246, 255, 0.4);
 }
+
 .draggable-barcode.dragging {
     opacity: 0.8;
     border-color: #3b82f6;
@@ -394,8 +417,10 @@ body {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    background: #0f172a; /* Slate 900 */
-    border: 1px solid #334155; /* Slate 700 */
+    background: #0f172a;
+    /* Slate 900 */
+    border: 1px solid #334155;
+    /* Slate 700 */
     border-radius: 12px;
     padding: 12px;
     gap: 10px;
@@ -424,7 +449,8 @@ body {
     align-items: center;
     gap: 6px;
     font-weight: 600;
-    color: #38bdf8; /* Sky 400 */
+    color: #38bdf8;
+    /* Sky 400 */
     font-size: 13px;
     letter-spacing: 0.3px;
 }
@@ -477,6 +503,7 @@ body {
     box-sizing: border-box;
     transition: all 0.15s ease;
 }
+
 .ctrl-select:focus {
     border-color: #38bdf8;
     box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
@@ -500,10 +527,12 @@ body {
     white-space: nowrap;
     box-sizing: border-box;
 }
+
 .ctrl-btn:hover {
     background: #334155;
     color: #fff;
 }
+
 .ctrl-btn:active {
     transform: scale(0.98);
 }
@@ -515,6 +544,7 @@ body {
     font-weight: 600;
     padding: 8px 12px;
 }
+
 .ctrl-btn-primary:hover {
     background: #1d4ed8;
     border-color: #60a5fa;
@@ -525,6 +555,7 @@ body {
     color: #fff;
     border-color: #10b981;
 }
+
 .ctrl-btn-success:hover {
     background: #047857;
 }
@@ -534,6 +565,7 @@ body {
     color: #94a3b8;
     padding: 5px 7px;
 }
+
 .ctrl-btn-ghost:hover {
     background: #1e293b;
     color: #f1f5f9;
@@ -550,12 +582,14 @@ body {
     width: 100%;
     padding: 2px 0;
 }
+
 .ctrl-switch-input {
     position: absolute;
     opacity: 0;
     width: 0;
     height: 0;
 }
+
 .ctrl-switch-slider {
     position: relative;
     display: inline-block;
@@ -566,6 +600,7 @@ body {
     transition: background-color 0.2s;
     flex-shrink: 0;
 }
+
 .ctrl-switch-slider:before {
     position: absolute;
     content: "";
@@ -577,10 +612,13 @@ body {
     border-radius: 50%;
     transition: transform 0.2s;
 }
-.ctrl-switch-input:checked + .ctrl-switch-slider {
-    background-color: #10b981; /* Emerald 500 */
+
+.ctrl-switch-input:checked+.ctrl-switch-slider {
+    background-color: #10b981;
+    /* Emerald 500 */
 }
-.ctrl-switch-input:checked + .ctrl-switch-slider:before {
+
+.ctrl-switch-input:checked+.ctrl-switch-slider:before {
     transform: translateX(12px);
 }
 
@@ -606,13 +644,16 @@ body {
     transition: opacity 0.2s ease, transform 0.2s ease;
     z-index: 100000;
 }
+
 .ctrl-toast.show {
     opacity: 1;
     transform: translateY(0);
 }
+
 .ctrl-toast.success {
     border-color: #10b981;
 }
+
 .ctrl-toast.info {
     border-color: #38bdf8;
 }
@@ -622,20 +663,24 @@ body {
     .no-print {
         display: none !important;
     }
+
     .editable-field {
         border: none !important;
         outline: none !important;
         background: transparent !important;
         padding: 0 !important;
     }
+
     .label {
         outline: none !important;
     }
+
     .draggable-title {
         border: none !important;
         outline: none !important;
         background: transparent !important;
     }
+
     .draggable-barcode {
         border: none !important;
         background: transparent !important;
@@ -646,7 +691,8 @@ body {
         margin: 0 !important;
     }
 
-    html, body {
+    html,
+    body {
         width: 90mm !important;
         height: auto !important;
         margin: 0 !important;
@@ -686,7 +732,12 @@ body {
         overflow: hidden !important;
     }
 
-    .group-1, .group-2, .group-3, .group-4, .group-mat, .group-5 {
+    .group-1,
+    .group-2,
+    .group-3,
+    .group-4,
+    .group-mat,
+    .group-5 {
         flex-shrink: 0 !important;
     }
 }
