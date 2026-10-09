@@ -30,13 +30,13 @@ class GenerateDynamicLot
         // 3. Month (2 digits)
         $month = $date->format('m');
 
-        // 4. Daily Sequence (3 digits)
+        // 4. Daily Sequence
         if (!empty($customSequence)) {
             $cleanSeq = preg_replace('/[^0-9]/', '', (string) $customSequence);
-            $sequencePadded = str_pad(substr($cleanSeq, 0, 3), 3, '0', STR_PAD_LEFT);
+            $sequencePadded = str_pad($cleanSeq, 2, '0', STR_PAD_LEFT);
         } else {
             $sequence = $this->getTodaySequence();
-            $sequencePadded = str_pad((string) $sequence, 3, '0', STR_PAD_LEFT);
+            $sequencePadded = str_pad((string) $sequence, 2, '0', STR_PAD_LEFT);
         }
 
         return $groupCode . $year . $month . $sequencePadded;
@@ -59,11 +59,11 @@ class GenerateDynamicLot
     }
 
     /**
-     * Get current today sequence formatted as 3-digit string (e.g. '132').
+     * Get current today sequence formatted as 2-digit string (e.g. '14').
      */
     public function getTodaySequenceString(): string
     {
-        return str_pad((string) $this->getTodaySequence(), 3, '0', STR_PAD_LEFT);
+        return str_pad((string) $this->getTodaySequence(), 2, '0', STR_PAD_LEFT);
     }
 
     /**
